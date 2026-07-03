@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    name: Lint · Typecheck · Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+
+  eval-gate:
+    name: Eval gate (agentic quality)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_db
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Apply schema
+        run: npx drizzle-kit push
+      - name: Build
+        run: npm run build
+      - name: Start server
+        run: |
+          npm run start &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3000/api/health && echo " -> server up" && exit 0
+            sleep 2
+          done
+          echo "server did not start" && exit 1
+      - name: Run eval harness (golden set)
+        run: |
+          node -e "
+            fetch('http://localhost:3000/api/eval?limit=2')
+              .then(r => r.json())
+              .then(j => {
+                console.log('eval:', JSON.stringify(j));
+                if (!j.gate) { console.error('EVAL GATE FAILED'); process.exit(1); }
+                console.log('EVAL GATE PASSED ✅');
+              })
+              .catch(e => { console.error(e); process.exit(1); });
+          "
