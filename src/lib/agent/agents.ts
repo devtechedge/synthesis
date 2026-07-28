@@ -106,47 +106,115 @@ export const plannerNode: Node = async (state, ctx) => {
 
 /* ------------------------------ Researcher ----------------------------- */
 
+/** Loose schema for LLM-produced evidence — id is assigned locally; credibility coerced. */
+const LlmEvidenceItemSchema = z.object({
+  claim: z.string(),
+  snippet: z.string().optional().default(""),
+  source: z
+    .object({
+      url: z.string().optional().default(""),
+      title: z.string().optional().default(""),
+      credibility: z.coerce.number().min(0).max(1).catch(0.6),
+      domain: z.string().optional(),
+      publishedDate: z.string().optional(),
+    })
+    .passthrough(),
+  score: z.coerce.number().min(0).max(1).catch(0.7),
+});
+
+function groundedFromSearch(sq: SubQuestion, top: SearchResult[]): EvidenceItem[] {
+  return top.map((r) => {
+    const claim = extractClaim(r);
+    return {
+      id: uid(),
+      subQuestionId: sq.id,
+      claim,
+      snippet: r.snippet,
+      source: {
+        url: r.url,
+        title: r.title,
+        credibility: r.credibility,
+        domain: r.domain,
+        publishedDate: r.publishedDate,
+      },
+      score: Math.min(0.98, 0.6 + r.credibility * 0.35),
+    } satisfies EvidenceItem;
+  });
+}
+
 async function runResearcher(state: ResearchState, ctx: SynthesisContext, sq: SubQuestion): Promise<EvidenceItem[]> {
   await ctx.emitter.emit({ type: "researcher", subQuestionId: sq.id, question: sq.question, status: "running" });
 
   const search = await ctx.emitter.span("web_search", "researcher", () => webSearch(sq.strategy || sq.question));
-  await ctx.emitter.emit({ type: "tool_call", tool: "web_search", args: { query: sq.strategy }, result: { count: search.results.length }, latencyMs: 0 });
+  await ctx.emitter.emit({
+    type: "tool_call",
+    tool: "web_search",
+    args: { query: sq.strategy },
+    result: { count: search.results.length },
+    latencyMs: 0,
+  });
 
   const top = search.results.slice(0, 3);
   // Deep-read the single most credible hit and ingest into the RAG corpus.
   if (top[0]) {
     const read = await ctx.emitter.span("read_url", "researcher", () => readUrl(top[0].url));
-    await ctx.emitter.emit({ type: "tool_call", tool: "read_url", args: { url: top[0].url }, result: { chars: read.content.length }, latencyMs: 0 });
+    await ctx.emitter.emit({
+      type: "tool_call",
+      tool: "read_url",
+      args: { url: top[0].url },
+      result: { chars: read.content.length },
+      latencyMs: 0,
+    });
     await ingestDocument(ctx.runId, { url: read.url, title: read.title, content: `${read.title}. ${read.content}` });
   }
 
-  const collected: EvidenceItem[] = [];
-  if (useRealLLM) {
-    const messages: ChatMessage[] = [
-      { role: "system", content: "You are a meticulous research analyst. Given search results, extract 1-3 evidence items as JSON {evidence:[{subQuestionId,claim,snippet,source:{url,title,credibility,domain},score}]}. score 0-1 relevance." },
-      { role: "user", content: `Sub-question: ${sq.question}\nResults:\n${JSON.stringify(search.results)}` },
-    ];
-    const { value, inputTokens, outputTokens, costUsd } = await ctx.emitter.span("extract", "researcher", () =>
-      completeJson(messages, (raw) => (z.object({ evidence: z.array(EvidenceSchema) }).parse(raw)).evidence),
-    );
-    ctx.budget.tokensUsed += inputTokens + outputTokens;
-    ctx.budget.costUsd += costUsd;
-    for (const e of value) collected.push({ ...e, id: uid(), subQuestionId: sq.id });
-  } else {
-    for (const r of top) {
-      await sleep(60 + Math.random() * 90);
-      const claim = extractClaim(r);
-      const item: EvidenceItem = {
-        id: uid(),
-        subQuestionId: sq.id,
-        claim,
-        snippet: r.snippet,
-        source: { url: r.url, title: r.title, credibility: r.credibility, domain: r.domain, publishedDate: r.publishedDate },
-        score: Math.min(0.98, 0.6 + r.credibility * 0.35),
-      };
-      collected.push(item);
-      charge(ctx, claim + r.snippet);
+  let collected: EvidenceItem[] = [];
+
+  if (useRealLLM && top.length > 0) {
+    try {
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content:
+            'You are a meticulous research analyst. Given search results, extract 1-3 evidence items as JSON {"evidence":[{"claim":"...","snippet":"...","source":{"url":"...","title":"...","credibility":0.8,"domain":"..."},"score":0.7}]}. credibility and score must be numbers 0-1. Do not invent URLs.',
+        },
+        { role: "user", content: `Sub-question: ${sq.question}\nResults:\n${JSON.stringify(search.results)}` },
+      ];
+      const { value, inputTokens, outputTokens, costUsd } = await ctx.emitter.span("extract", "researcher", () =>
+        completeJson(messages, (raw) => {
+          const parsed = z.object({ evidence: z.array(LlmEvidenceItemSchema) }).parse(raw);
+          return parsed.evidence;
+        }),
+      );
+      ctx.budget.tokensUsed += inputTokens + outputTokens;
+      ctx.budget.costUsd += costUsd;
+      for (const e of value) {
+        const domain = e.source.domain || (e.source.url ? new URL(e.source.url).hostname.replace(/^www\./, "") : "source");
+        collected.push({
+          id: uid(),
+          subQuestionId: sq.id,
+          claim: e.claim,
+          snippet: e.snippet || e.claim,
+          source: {
+            url: e.source.url || top[0]?.url || "",
+            title: e.source.title || domain,
+            credibility: e.source.credibility,
+            domain,
+            publishedDate: e.source.publishedDate,
+          },
+          score: e.score,
+        });
+      }
+    } catch {
+      // LLM extract failed (Zod / non-JSON / empty) — fall through to grounded path
+      collected = [];
     }
+  }
+
+  // Always ensure evidence when search returned hits (simulated path, or LLM failed/empty)
+  if (collected.length === 0 && top.length > 0) {
+    collected = groundedFromSearch(sq, top);
+    for (const item of collected) charge(ctx, item.claim + item.snippet);
   }
 
   for (const item of collected) {
@@ -198,13 +266,21 @@ export const synthesizerNode: Node = async (state, ctx) => {
 
   let report: string;
   if (useRealLLM) {
-    const evidenceDigest = state.evidence.map((e, i) => `[${i + 1}] (${e.source.domain}, cred ${e.source.credibility.toFixed(2)}) ${e.claim}`).join("\n");
+    const evidenceDigest = state.evidence
+      .map((e, i) => `[${i + 1}] (${e.source.domain}, cred ${e.source.credibility.toFixed(2)}) ${e.claim}`)
+      .join("\n");
     const critique = state.reflection ? `\nPrior critique to address: ${state.reflection.unsupportedClaims.join("; ")}` : "";
     const messages: ChatMessage[] = [
-      { role: "system", content: "You are a senior research synthesizer. Write a cited Markdown report. Reference evidence as [n]. Be concise, structured with headings. Never invent sources." },
-      { role: "user", content: `Brief: ${state.brief}\nEvidence:\n${evidenceDigest}${critique}` },
+      {
+        role: "system",
+        content:
+          "You are a senior research synthesizer. Write a cited Markdown report. Reference evidence as [n]. Be concise, structured with headings. Never invent sources. If evidence is sparse, say so explicitly.",
+      },
+      { role: "user", content: `Brief: ${state.brief}\nEvidence:\n${evidenceDigest || "(no structured evidence items)"}${critique}` },
     ];
-    const { content, inputTokens, outputTokens, costUsd } = await ctx.emitter.span("synthesize", "synthesizer", () => complete(messages, { temperature: 0.4 }));
+    const { content, inputTokens, outputTokens, costUsd } = await ctx.emitter.span("synthesize", "synthesizer", () =>
+      complete(messages, { temperature: 0.4 }),
+    );
     ctx.budget.tokensUsed += inputTokens + outputTokens;
     ctx.budget.costUsd += costUsd;
     report = content;
@@ -251,9 +327,7 @@ function synthReport(state: ResearchState): string {
       continue;
     }
     const refs = ev.map((e) => `[${refOf(e.source.url) || "?"}]`).join("");
-    const woven = ev
-      .map((e) => e.claim.replace(/\.$/, ""))
-      .join("; ");
+    const woven = ev.map((e) => e.claim.replace(/\.$/, "")).join("; ");
     lines.push(`${woven}. ${refs}`, "");
     lines.push("| Source | Credibility |", "| --- | --- |");
     for (const e of ev) lines.push(`| ${e.source.domain} | ${(e.source.credibility * 100).toFixed(0)}% |`);
@@ -267,7 +341,9 @@ function synthReport(state: ResearchState): string {
     "",
   );
   lines.push("## Sources & confidence", "");
-  citeIndex.forEach((c, i) => lines.push(`${i + 1}. **${c.source.domain}** — ${c.source.title} (credibility ${(c.source.credibility * 100).toFixed(0)}%)`));
+  citeIndex.forEach((c, i) =>
+    lines.push(`${i + 1}. **${c.source.domain}** — ${c.source.title} (credibility ${(c.source.credibility * 100).toFixed(0)}%)`),
+  );
   lines.push("");
   return lines.join("\n");
 }
@@ -279,8 +355,15 @@ export const criticNode: Node = async (state, ctx) => {
   let reflection: Reflection;
   if (useRealLLM) {
     const messages: ChatMessage[] = [
-      { role: "system", content: "You are a rigorous fact-checker. Evaluate the report's faithfulness to the evidence. Output JSON {faithfulness(0-1),unsupportedClaims[],missingEvidence[],contradictions[],recommendation('accept'|'revise'),notes}." },
-      { role: "user", content: `Report:\n${state.report}\n\nEvidence:\n${state.evidence.map((e) => e.claim).join("\n")}` },
+      {
+        role: "system",
+        content:
+          "You are a rigorous fact-checker. Evaluate the report's faithfulness to the evidence. Output JSON {faithfulness(0-1),unsupportedClaims[],missingEvidence[],contradictions[],recommendation('accept'|'revise'),notes}.",
+      },
+      {
+        role: "user",
+        content: `Report:\n${state.report}\n\nEvidence:\n${state.evidence.map((e) => e.claim).join("\n") || "(none)"}`,
+      },
     ];
     const { value, inputTokens, outputTokens, costUsd } = await ctx.emitter.span("critique", "critic", () =>
       completeJson(messages, (raw) => ReflectionSchema.parse(raw)),
@@ -306,7 +389,12 @@ export const criticNode: Node = async (state, ctx) => {
     charge(ctx, JSON.stringify(reflection));
   }
   await ctx.emitter.emit({ type: "reflection", reflection });
-  await ctx.emitter.emit({ type: "node_end", node: "critic", agent: "critic", summary: `Faithfulness ${(reflection.faithfulness * 100).toFixed(0)}%` });
+  await ctx.emitter.emit({
+    type: "node_end",
+    node: "critic",
+    agent: "critic",
+    summary: `Faithfulness ${(reflection.faithfulness * 100).toFixed(0)}%`,
+  });
   return { reflection };
 };
 
@@ -346,5 +434,3 @@ export const finalizerNode: Node = async (state, ctx) => {
   });
   return { status: "done", confidence };
 };
-
-
