@@ -33,7 +33,8 @@ export const SubQuestionSchema = z.object({
   question: z.string(),
   strategy: z.string(),
   evidenceType: z.string().default("mixed"),
-  status: z.enum(["pending", "running", "done", "failed"]).default("pending"),
+  // .catch so free-tier models that invent status strings still parse cleanly
+  status: z.enum(["pending", "running", "done", "failed"]).catch("pending").default("pending"),
 });
 export type SubQuestion = z.infer<typeof SubQuestionSchema>;
 
