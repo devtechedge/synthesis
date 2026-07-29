@@ -15,9 +15,9 @@
 
 **https://synthesis-gold.vercel.app/**
 
-- **Demo / simulated mode always works** (no keys required) — deterministic grounded engine, full graph, HITL, telemetry.
-- **Real LLM mode** when `OPENAI_API_KEY` + `OPENAI_BASE_URL` + `OPENAI_MODEL` (OpenRouter / any OpenAI-compatible) and `TAVILY_API_KEY` are set.
-- OpenRouter free-tier (`:free` models) is rate-limited (~50 req/day without a credit deposit) — a full multi-agent run uses several calls, so expect a handful of complete research sessions per day on pure free tier.
+- **Real LLM path is live** — Groq (`llama-3.3-70b-versatile`) + Tavily web search. Full multi-agent runs with cited reports, Reflexion, and telemetry.
+- **Demo / simulated mode always works** when no keys are set — deterministic grounded engine, full graph, HITL, telemetry (same UI).
+- Any OpenAI-compatible provider works via `OPENAI_API_KEY` + `OPENAI_BASE_URL` + `OPENAI_MODEL`.
 
 ---
 
@@ -119,10 +119,10 @@ Deterministic grounded engine — full graph, HITL, telemetry, eval. **Deployed 
 
 ### Real mode
 ```
-OPENAI_API_KEY=...            # OpenRouter or any OpenAI-compatible key
-OPENAI_BASE_URL=https://openrouter.ai/api/v1
-OPENAI_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free   # or any model id
-TAVILY_API_KEY=...            # live web search
+OPENAI_API_KEY=gsk_...                    # Groq (or any OpenAI-compatible key)
+OPENAI_BASE_URL=https://api.groq.com/openai/v1
+OPENAI_MODEL=llama-3.3-70b-versatile
+TAVILY_API_KEY=...                        # live web search
 ```
 
 ---
@@ -139,7 +139,7 @@ TAVILY_API_KEY=...            # live web search
 
 1. Import the GitHub repo on Vercel.
 2. Add Neon Postgres (Storage → Create Database → Neon) — `DATABASE_URL` is injected automatically.
-3. Optional: OpenRouter + Tavily env vars for real-LLM mode.
+3. Optional: Groq + Tavily env vars for real-LLM mode.
 4. Redeploy and open the live URL.
 
 ---
