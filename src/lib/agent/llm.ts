@@ -50,23 +50,32 @@ interface CompletionResult {
   costUsd: number;
 }
 
-export async function complete(messages: ChatMessage[], opts?: { temperature?: number }): Promise<CompletionResult> {
+/** Free-form completion (Markdown reports, prose). No response_format. */
+export async function complete(
+  messages: ChatMessage[],
+  opts?: { temperature?: number; json?: boolean },
+): Promise<CompletionResult> {
   if (!useRealLLM) {
     throw new Error("complete() called without an API key — agent should use its simulator fallback.");
   }
   const temperature = opts?.temperature ?? 0.2;
+  const body: Record<string, unknown> = {
+    model: LLM_MODEL,
+    messages,
+    temperature,
+  };
+  // Only force JSON when explicitly requested (completeJson path).
+  // Groq requires the word "json" in messages when response_format is json_object.
+  if (opts?.json) {
+    body.response_format = { type: "json_object" };
+  }
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model: LLM_MODEL,
-      messages,
-      temperature,
-      response_format: { type: "json_object" },
-    }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -88,14 +97,31 @@ export async function completeJson<T>(
   parse: (raw: unknown) => T,
   opts?: { temperature?: number },
 ): Promise<{ value: T; inputTokens: number; outputTokens: number; costUsd: number }> {
-  const { content, inputTokens, outputTokens, costUsd } = await complete(messages, opts);
+  // Groq (and some providers) require the word "json" somewhere in messages
+  // when response_format is json_object. Ensure it is present.
+  const hasJsonWord = messages.some((m) => /\bjson\b/i.test(m.content));
+  const msgs: ChatMessage[] = hasJsonWord
+    ? messages
+    : [
+        ...messages,
+        { role: "user", content: "Respond with valid JSON only." },
+      ];
+
+  const { content, inputTokens, outputTokens, costUsd } = await complete(msgs, {
+    ...opts,
+    json: true,
+  });
   let json: unknown;
   try {
     json = JSON.parse(content);
   } catch {
     // Fallback: extract the first {...} block.
     const m = content.match(/\{[\s\S]*\}/);
-    json = m ? JSON.parse(m[0]) : (() => { throw new Error("Model returned non-JSON"); })();
+    json = m
+      ? JSON.parse(m[0])
+      : (() => {
+          throw new Error("Model returned non-JSON");
+        })();
   }
   return { value: parse(json), inputTokens, outputTokens, costUsd };
 }
@@ -107,7 +133,10 @@ const HASH_DIM = 256;
 
 function hashEmbed(text: string): number[] {
   const vec = new Array<number>(HASH_DIM).fill(0);
-  const tokens = text.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean);
+  const tokens = text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/g)
+    .filter(Boolean);
   for (const tok of tokens) {
     let h = 2166136261;
     for (let i = 0; i < tok.length; i++) {
@@ -143,7 +172,9 @@ export function cosine(a: number[], b: number[]): number {
     a = a.slice(0, n);
     b = b.slice(0, n);
   }
-  let dot = 0, na = 0, nb = 0;
+  let dot = 0,
+    na = 0,
+    nb = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     na += a[i] * a[i];
