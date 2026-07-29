@@ -23,9 +23,13 @@
 
 ## Screenshots
 
-| Plan approval (HITL) | Evidence gathered | Run complete |
-|---|---|---|
-| ![Plan approval](docs/screenshots/plan-approval.png) | ![Evidence](docs/screenshots/evidence-gathered.png) | ![Complete](docs/screenshots/run-complete.png) |
+| Plan approval (HITL) | Run complete |
+|---|---|
+| ![Plan approval](docs/screenshots/plan-approval.png) | ![Complete](docs/screenshots/run-complete.png) |
+
+| Cited report | Evidence (11 sources) |
+|---|---|
+| ![Report](docs/screenshots/report-view.png) | ![Evidence](docs/screenshots/evidence-gathered.png) |
 
 ---
 
