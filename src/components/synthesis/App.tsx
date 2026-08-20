@@ -255,6 +255,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
             onChange={(e) => setBrief(e.target.value)}
             disabled={busy}
             rows={2}
+            data-testid="brief-input"
             placeholder="Ask a complex research question — the crew will plan, search, retrieve, synthesize, critique, and return a cited report with a confidence score."
             className="w-full resize-none rounded-xl border border-white/10 bg-[#0b0e1a] px-3.5 py-3 text-sm text-slate-100 placeholder:text-slate-600 focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/40 disabled:opacity-50"
           />
@@ -263,6 +264,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
               <button
                 onClick={startRun}
                 disabled={!brief.trim() || busy}
+                data-testid="launch-research"
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 🚀 Launch research
@@ -281,6 +283,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
                 <button
                   key={ex}
                   onClick={() => setBrief(ex)}
+                  data-testid="example-prompt"
                   className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition hover:border-violet-400/40 hover:text-violet-200"
                 >
                   {ex.length > 42 ? ex.slice(0, 42) + "…" : ex}
@@ -301,6 +304,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
               <h2 className="text-sm font-bold text-amber-200">🟡 Plan ready — human approval required</h2>
               <button
                 onClick={approve}
+                data-testid="approve-execute"
                 className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-emerald-900/30 transition hover:scale-[1.02]"
               >
                 ✓ Approve &amp; execute
@@ -389,7 +393,10 @@ function StatusBadge({ phase }: { phase: Phase }) {
   };
   const s = map[phase];
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white/5 px-3 py-1 text-xs font-medium ${s.cls}`}>
+    <span
+      data-testid="status-badge"
+      className={`inline-flex items-center gap-1.5 rounded-full border bg-white/5 px-3 py-1 text-xs font-medium ${s.cls}`}
+    >
       <span className={`h-1.5 w-1.5 rounded-full ${s.dot} ${phase === "running" ? "pulse-dot" : ""}`} />
       {s.label}
     </span>
