@@ -1,6 +1,7 @@
 # Synthesis — Autonomous Multi-Agent Research Platform
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-synthesis--gold.vercel.app-black?style=for-the-badge&logo=vercel)](https://synthesis-gold.vercel.app/)
+[![CI](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph.js-agent%20graph-1C3C3C?style=flat-square)](https://langchain-ai.github.io/langgraphjs/)
@@ -133,9 +134,21 @@ TAVILY_API_KEY=...                        # live web search
 
 ## Evaluation & CI
 
-`GET /api/eval?limit=2` runs the pipeline headless against a golden set.
+[![CI](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml)
 
-`.github/workflows/ci.yml` — lint → typecheck → build, plus an eval-gate job.
+- **Unit tests** — Zod schemas, token/cost math, cosine, tool allow-lists, StateGraph termination, Reflexion routing (`npm test`)
+- **Typecheck** — `tsc --noEmit`
+- **Playwright** — Chromium smokes for idle chrome + HITL plan pause (`npm run test:e2e`)
+- **Eval gate** — `GET /api/eval?limit=2` golden set (simulated engine, Postgres service)
+
+```bash
+npm ci
+npm test
+npm run typecheck
+npm run test:e2e    # needs DATABASE_URL for the HITL path; UI smokes skip it
+```
+
+Threat model: [SECURITY.md](./SECURITY.md).
 
 ---
 
@@ -166,5 +179,7 @@ See [`.env.example`](./.env.example). Only `DATABASE_URL` is required; everythin
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
+See also [SECURITY.md](./SECURITY.md).
 
 Built as a senior-portfolio demonstration of agentic-loop engineering.
