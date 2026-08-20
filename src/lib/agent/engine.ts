@@ -47,7 +47,7 @@ const NODE_META: Record<string, { agent: string; label: string }> = {
 };
 
 /** The Reflexion routing decision — bounded loop, never open-ended. */
-function criticRouter(state: ResearchState): string {
+export function criticRouter(state: ResearchState): string {
   const r = state.reflection;
   if (r && r.recommendation === "revise" && state.budget.revisionsUsed <= MAX_REVISIONS) {
     return "synthesizer";

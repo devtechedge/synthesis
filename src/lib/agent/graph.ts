@@ -83,11 +83,17 @@ export class StateGraph<S extends { budget: Budget } & Record<string, unknown>, 
       }
       ctx.budget.stepsUsed += 1;
 
-      // Hard budget guard: route to finalizer (graceful degradation), then END.
-      if (ctx.budget.tokensUsed > ctx.budget.maxTokens || ctx.budget.costUsd > ctx.budget.maxCostUsd) {
+      // Hard budget guard: skip remaining work and run finalizer once.
+      if (
+        current !== "finalizer" &&
+        (ctx.budget.tokensUsed > ctx.budget.maxTokens || ctx.budget.costUsd > ctx.budget.maxCostUsd)
+      ) {
         yield { kind: "budget_exceeded", node: current };
-        if (current !== "finalizer" && this.nodes.has("finalizer")) current = "finalizer";
-        else break;
+        if (this.nodes.has("finalizer")) {
+          current = "finalizer";
+          continue;
+        }
+        break;
       }
 
       yield { kind: "node_start", node: current };

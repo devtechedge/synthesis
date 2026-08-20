@@ -20,7 +20,7 @@ const SERPER_KEY = process.env.SERPER_API_KEY;
 const TAVILY_KEY = process.env.TAVILY_API_KEY;
 const JINA_KEY = process.env.JINA_API_KEY;
 
-function domainOf(url: string): string {
+export function domainOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
@@ -28,7 +28,7 @@ function domainOf(url: string): string {
   }
 }
 
-function credibilityFor(domain: string): number {
+export function credibilityFor(domain: string): number {
   const gov = /\.gov$|\.mil$|who\.int|cdc\.gov|nasa\.gov/;
   const edu = /\.edu$|arxiv\.org|nature\.com|sciencedirect\.com|ieee\.org|wikipedia\.org/;
   const news = /reuters\.com|bloomberg\.com|ft\.com|nytimes\.com|bbc\.com|apnews\.com|economist\.com/;

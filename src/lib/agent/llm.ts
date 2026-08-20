@@ -43,6 +43,13 @@ export function costForTokens(model: string, inputT: number, outputT: number): n
   return (inputT / 1_000_000) * p.in + (outputT / 1_000_000) * p.out;
 }
 
+/** Groq requires the word "json" in messages when response_format is json_object. */
+export function ensureJsonHint(messages: ChatMessage[]): ChatMessage[] {
+  const hasJsonWord = messages.some((m) => /\bjson\b/i.test(m.content));
+  if (hasJsonWord) return messages;
+  return [...messages, { role: "user", content: "Respond with valid JSON only." }];
+}
+
 interface CompletionResult {
   content: string;
   inputTokens: number;
@@ -97,15 +104,7 @@ export async function completeJson<T>(
   parse: (raw: unknown) => T,
   opts?: { temperature?: number },
 ): Promise<{ value: T; inputTokens: number; outputTokens: number; costUsd: number }> {
-  // Groq (and some providers) require the word "json" somewhere in messages
-  // when response_format is json_object. Ensure it is present.
-  const hasJsonWord = messages.some((m) => /\bjson\b/i.test(m.content));
-  const msgs: ChatMessage[] = hasJsonWord
-    ? messages
-    : [
-        ...messages,
-        { role: "user", content: "Respond with valid JSON only." },
-      ];
+  const msgs = ensureJsonHint(messages);
 
   const { content, inputTokens, outputTokens, costUsd } = await complete(msgs, {
     ...opts,
