@@ -4,7 +4,7 @@
  * One typed interface. When an OpenAI-compatible key is present (OpenAI, Groq,
  * OpenRouter, local vLLM…) it performs REAL reasoning. With no key it is absent
  * and agents fall back to a deterministic, grounded simulator — so the deployed
- * demo ALWAYS works for recruiters while remaining fully functional.
+ * demo ALWAYS works for visitors while remaining fully functional.
  *
  * Principle #11: frameworks are configurations behind interfaces, not the architecture.
  */

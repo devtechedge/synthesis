@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   });
 }
 
-/** GET /api/run — recent runs (recruiter can browse past research). */
+/** GET /api/run — recent runs (visitors can browse past research). */
 export async function GET() {
   const rows = await db
     .select({
