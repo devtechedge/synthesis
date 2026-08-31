@@ -5,6 +5,7 @@ import type { RunSummary, Plan, AgentEvent, EvidenceItem, Reflection } from "@/l
 import { AgentGraph } from "./AgentGraph";
 import { Timeline, type TimelineEntry } from "./Timeline";
 import { ReportView } from "./ReportView";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type Phase = "idle" | "planning" | "awaiting" | "running" | "done" | "error";
 type Tab = "timeline" | "report" | "evidence";
@@ -240,7 +241,10 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
               <p className="hidden text-[0.68rem] text-slate-400 sm:block">Autonomous Multi-Agent Research Platform</p>
             </div>
           </div>
-          <StatusBadge phase={phase} />
+          <div className="flex items-center gap-2">
+            <StatusBadge phase={phase} />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

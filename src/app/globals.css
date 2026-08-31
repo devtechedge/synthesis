@@ -5,10 +5,22 @@
 [data-theme="dark"] {
   color-scheme: dark;
   --bg: #05060f;
+  --surface: rgba(255, 255, 255, 0.03);
   --fg: #e2e8f0;
   --muted: #94a3b8;
   --border: rgba(255, 255, 255, 0.1);
 }
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f2fb;
+  --surface: #ffffff;
+  --fg: #0f172a;
+  --muted: #475569;
+  --border: rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="light"] { color-scheme: light; }
 
 html {
   scroll-behavior: smooth;
@@ -146,3 +158,45 @@ body {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
   50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
 }
+
+[data-theme="light"] .app-bg::before {
+  background:
+    radial-gradient(1100px 700px at 12% -8%, rgba(124, 58, 237, 0.12), transparent 60%),
+    radial-gradient(1000px 620px at 92% 4%, rgba(6, 182, 212, 0.10), transparent 60%),
+    radial-gradient(900px 600px at 50% 120%, rgba(217, 70, 239, 0.08), transparent 60%);
+}
+[data-theme="light"] .app-bg::after {
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+}
+[data-theme="light"] header {
+  background-color: color-mix(in oklab, var(--surface) 80%, transparent) !important;
+  border-color: var(--border) !important;
+}
+[data-theme="light"] .text-white { color: var(--fg) !important; }
+[data-theme="light"] .border-white\/10 { border-color: var(--border) !important; }
+[data-theme="light"] .bg-white\/\[0\.03\] { background-color: var(--surface) !important; }
+[data-theme="light"] .markdown-body {
+  --tw-prose-body: #334155;
+  --tw-prose-headings: #0f172a;
+  --tw-prose-lead: #475569;
+  --tw-prose-links: #6d28d9;
+  --tw-prose-bold: #0f172a;
+  --tw-prose-code: #5b21b6;
+}
+
+.theme-toggle {
+  width: 36px; height: 36px; padding: 0; flex: 0 0 36px;
+  display: grid; place-items: center; position: relative;
+  border-radius: 8px; cursor: pointer; border: 0;
+  background: transparent; color: inherit;
+  box-shadow: 0 0 0 1px color-mix(in oklab, currentColor 18%, transparent);
+}
+.theme-toggle .icon {
+  grid-area: 1 / 1; display: grid; place-items: center;
+  transition: opacity 300ms cubic-bezier(0.2,0,0,1), transform 300ms cubic-bezier(0.2,0,0,1), filter 300ms cubic-bezier(0.2,0,0,1);
+}
+.theme-toggle .icon.on { opacity: 1; transform: scale(1); filter: blur(0); }
+.theme-toggle .icon.off { opacity: 0; transform: scale(0.25); filter: blur(4px); }
+
