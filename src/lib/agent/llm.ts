@@ -1,13 +1,14 @@
 /**
  * Synthesis — LLM abstraction.
  *
- * One typed interface. When an OpenAI-compatible key is present (OpenAI, Groq,
- * OpenRouter, local vLLM…) it performs REAL reasoning. With no key it is absent
- * and agents fall back to a deterministic, grounded simulator — so the deployed
- * demo ALWAYS works for visitors while remaining fully functional.
+ * Real reasoning only when LIVE_MODE=true and keys are present (and optional
+ * PUBLIC_RUN_TOKEN matches). Otherwise agents use the deterministic simulator
+ * so the public demo cannot burn provider credits by default.
  *
  * Principle #11: frameworks are configurations behind interfaces, not the architecture.
  */
+
+import { allowLiveProviders } from "@/lib/security/live";
 
 export type ChatRole = "system" | "user" | "assistant";
 export interface ChatMessage {
@@ -23,8 +24,13 @@ const baseUrl =
 export const LLM_MODEL = process.env.OPENAI_MODEL ?? process.env.LLM_MODEL ?? "gpt-4o-mini";
 export const EMBED_MODEL = process.env.EMBED_MODEL ?? "text-embedding-3-small";
 
-/** True only when a real model endpoint is configured. */
-export const useRealLLM = apiKey.trim().length > 0;
+/**
+ * True only when LIVE_MODE=true, keys are present, and the request gate allows live.
+ * Public demos default to simulated even if Vercel has keys.
+ */
+export function useRealLLM(): boolean {
+  return allowLiveProviders() && apiKey.trim().length > 0;
+}
 
 /** Pricing per 1M tokens (USD). Conservative defaults. */
 const PRICING: Record<string, { in: number; out: number }> = {
@@ -62,7 +68,7 @@ export async function complete(
   messages: ChatMessage[],
   opts?: { temperature?: number; json?: boolean },
 ): Promise<CompletionResult> {
-  if (!useRealLLM) {
+  if (!useRealLLM()) {
     throw new Error("complete() called without an API key — agent should use its simulator fallback.");
   }
   const temperature = opts?.temperature ?? 0.2;
@@ -150,7 +156,7 @@ function hashEmbed(text: string): number[] {
 }
 
 export async function embed(text: string): Promise<number[]> {
-  if (!useRealLLM) return hashEmbed(text);
+  if (!useRealLLM()) return hashEmbed(text);
   try {
     const res = await fetch(`${baseUrl}/embeddings`, {
       method: "POST",

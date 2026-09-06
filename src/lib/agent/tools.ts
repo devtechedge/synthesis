@@ -7,6 +7,8 @@
  * schema, not prose (principle #6).
  */
 
+import { allowLiveProviders } from "@/lib/security/live";
+
 export type SearchResult = {
   title: string;
   url: string;
@@ -43,6 +45,7 @@ export function credibilityFor(domain: string): number {
 /* ------------------------------ web_search ----------------------------- */
 
 export async function webSearch(query: string): Promise<{ query: string; results: SearchResult[] }> {
+  if (!allowLiveProviders()) return simulatedSearch(query);
   if (TAVILY_KEY) return tavilySearch(query);
   if (SERPER_KEY) return serperSearch(query);
   return simulatedSearch(query);
@@ -125,7 +128,7 @@ async function simulatedSearch(query: string): Promise<{ query: string; results:
 /* -------------------------------- read_url ----------------------------- */
 
 export async function readUrl(url: string): Promise<{ url: string; title: string; content: string }> {
-  if (JINA_KEY) {
+  if (JINA_KEY && allowLiveProviders()) {
     try {
       const res = await fetch(`https://r.jina.ai/${url}`, {
         headers: { Authorization: `Bearer ${JINA_KEY}`, Accept: "text/markdown" },

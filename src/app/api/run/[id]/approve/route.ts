@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import type { ResearchState } from "@/lib/agent/schemas";
 import { runResearch } from "@/lib/agent/engine";
 import { Emitter } from "@/lib/agent/tracer";
+import { guardExpensivePost } from "@/lib/security/http";
+import { resolveLiveForRequest, runWithLiveGateAsync } from "@/lib/security/live";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +16,10 @@ export const maxDuration = 60;
  * Resumes the LangGraph from the planner checkpoint and streams every event
  * back as Server-Sent Events so the UI renders the run live.
  */
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const guard = guardExpensivePost(req, "approve");
+  if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
+
   const { id } = await params;
   const runId = Number(id);
   if (!Number.isFinite(runId)) return Response.json({ error: "bad id" }, { status: 400 });
@@ -28,6 +33,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   await db.update(researchRuns).set({ status: "researching", updatedAt: new Date() }).where(eq(researchRuns.id, runId));
 
+  const allowLive = resolveLiveForRequest(req);
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -38,13 +44,15 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
           /* controller closed */
         }
       };
-      send({ type: "status", status: "researching" });
+      send({ type: "status", status: "researching", mode: allowLive ? "live" : "simulated" });
       const emitter = new Emitter(runId, (e) => send(e));
       try {
-        await runResearch(state, emitter, runId);
+        await runWithLiveGateAsync(allowLive, () => runResearch(state, emitter, runId));
         send({ type: "__done__", runId });
       } catch (e) {
-        send({ type: "error", message: e instanceof Error ? e.message : String(e) });
+        const message = e instanceof Error ? e.message : "execution failed";
+        // Never echo secrets / stack traces with env material
+        send({ type: "error", message: message.slice(0, 200) });
       } finally {
         try {
           controller.close();
