@@ -170,7 +170,7 @@ async function runResearcher(state: ResearchState, ctx: SynthesisContext, sq: Su
 
   let collected: EvidenceItem[] = [];
 
-  if (useRealLLM && top.length > 0) {
+  if (useRealLLM() && top.length > 0) {
     try {
       const messages: ChatMessage[] = [
         {
