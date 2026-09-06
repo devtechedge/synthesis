@@ -1,13 +1,12 @@
-"use client";
+﻿"use client";
 
 import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import "highlight.js/styles/github-dark.css";
 
 function ReportViewBase({ markdown, streaming }: { markdown: string; streaming?: boolean }) {
   if (!markdown) {
-    return <p className="text-sm text-slate-600">The cited report will stream in here as the synthesizer works…</p>;
+    return <p className="text-sm text-slate-600">The cited report will stream in here as the synthesizer worksâ€¦</p>;
   }
   return (
     <div className="markdown-body relative max-w-none">

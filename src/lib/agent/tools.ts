@@ -145,19 +145,6 @@ export async function readUrl(url: string): Promise<{ url: string; title: string
   };
 }
 
-/* -------------------------------- compute ------------------------------ */
-
-export function compute(expression: string): { expression: string; result: number | string } {
-  const safe = /^[-+*/().\d\s%]+$/.test(expression);
-  if (!safe) return { expression, result: "error: unsafe expression" };
-  try {
-    const val = Function(`"use strict"; return (${expression});`)();
-    if (typeof val !== "number" || !isFinite(val)) return { expression, result: "error: non-finite" };
-    return { expression, result: val };
-  } catch {
-    return { expression, result: "error: evaluation failed" };
-  }
-}
 
 /* ------------------------------- helpers ------------------------------- */
 
