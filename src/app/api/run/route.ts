@@ -4,12 +4,17 @@ import { desc, eq } from "drizzle-orm";
 import type { RunSummary, Status } from "@/lib/agent/schemas";
 import { createInitialState, planResearch } from "@/lib/agent/engine";
 import { Emitter } from "@/lib/agent/tracer";
+import { guardExpensivePost } from "@/lib/security/http";
+import { resolveLiveForRequest, runWithLiveGateAsync } from "@/lib/security/live";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** POST /api/run — create a research run and execute the planning phase (HITL). */
 export async function POST(req: Request) {
+  const guard = guardExpensivePost(req, "run");
+  if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
+
   let body: { brief?: unknown; constraints?: unknown };
   try {
     body = await req.json();
@@ -23,26 +28,31 @@ export async function POST(req: Request) {
   const constraints =
     body.constraints && typeof body.constraints === "object" ? (body.constraints as Record<string, unknown>) : {};
 
-  const inserted = await db
-    .insert(researchRuns)
-    .values({ threadId: Math.random().toString(36).slice(2), brief, constraints, status: "planning" })
-    .returning({ id: researchRuns.id });
-  const runId = inserted[0]!.id;
+  const allowLive = resolveLiveForRequest(req);
 
-  const state = createInitialState(brief, constraints);
-  const emitter = new Emitter(runId); // persist-only (no SSE in planning phase)
-  await planResearch(state, emitter, runId);
+  return runWithLiveGateAsync(allowLive, async () => {
+    const inserted = await db
+      .insert(researchRuns)
+      .values({ threadId: Math.random().toString(36).slice(2), brief, constraints, status: "planning" })
+      .returning({ id: researchRuns.id });
+    const runId = inserted[0]!.id;
 
-  const row = await db
-    .select({ status: researchRuns.status, planJson: researchRuns.planJson })
-    .from(researchRuns)
-    .where(eqId(runId))
-    .limit(1);
+    const state = createInitialState(brief, constraints);
+    const emitter = new Emitter(runId); // persist-only (no SSE in planning phase)
+    await planResearch(state, emitter, runId);
 
-  return Response.json({
-    runId,
-    status: (row[0]?.status ?? "planning") as Status,
-    plan: row[0]?.planJson,
+    const row = await db
+      .select({ status: researchRuns.status, planJson: researchRuns.planJson })
+      .from(researchRuns)
+      .where(eqId(runId))
+      .limit(1);
+
+    return Response.json({
+      runId,
+      status: (row[0]?.status ?? "planning") as Status,
+      plan: row[0]?.planJson,
+      mode: allowLive ? "live" : "simulated",
+    });
   });
 }
 

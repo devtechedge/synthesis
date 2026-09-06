@@ -17,7 +17,7 @@
 **https://synthesis-gold.vercel.app/**
 
 - **Real LLM path is live** — Groq (`llama-3.3-70b-versatile`) + Tavily web search. Full multi-agent runs with cited reports, Reflexion, and telemetry.
-- **Demo / simulated mode always works** when no keys are set — deterministic grounded engine, full graph, HITL, telemetry (same UI).
+- **Demo / simulated mode is the default** — works with or without keys. Real LLM/search only when LIVE_MODE=true and keys are set (optional PUBLIC_RUN_TOKEN).
 - Any OpenAI-compatible provider works via `OPENAI_API_KEY` + `OPENAI_BASE_URL` + `OPENAI_MODEL`.
 
 ---
@@ -156,14 +156,15 @@ Threat model: [SECURITY.md](./SECURITY.md).
 
 1. Import the GitHub repo on Vercel.
 2. Add Neon Postgres (Storage → Create Database → Neon) — `DATABASE_URL` is injected automatically.
-3. Optional: Groq + Tavily env vars for real-LLM mode.
-4. Redeploy and open the live URL.
+3. Optional: Groq + Tavily env vars. Real spend also needs LIVE_MODE=true (keep false on public demos).
+4. Optional: PUBLIC_RUN_TOKEN — live calls must send matching x-run-token.
+5. Redeploy and open the live URL.
 
 ---
 
 ## Environment
 
-See [`.env.example`](./.env.example). Only `DATABASE_URL` is required; everything else enables real LLM / live tools.
+See [`.env.example`](./.env.example). Only `DATABASE_URL` is required. Provider keys alone do not enable live spend — set LIVE_MODE=true (and optionally PUBLIC_RUN_TOKEN). Details: [SECURITY.md](./SECURITY.md).
 
 ---
 

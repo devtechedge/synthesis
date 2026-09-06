@@ -82,7 +82,7 @@ export const plannerNode: Node = async (state, ctx) => {
   await ctx.emitter.emit({ type: "node_start", node: "planner", agent: "planner", label: "Decomposing brief into a research plan" });
 
   let plan: Plan;
-  if (useRealLLM) {
+  if (useRealLLM()) {
     const messages: ChatMessage[] = [
       { role: "system", content: "You are a senior research planner. Output JSON {title,rationale,subQuestions:[{id,question,strategy,evidenceType,status}],outline:[]} with 3-5 sharp sub-questions. ids must be short strings." },
       { role: "user", content: `Research brief: ${state.brief}` },
@@ -265,7 +265,7 @@ export const synthesizerNode: Node = async (state, ctx) => {
   state.budget.revisionsUsed += 1;
 
   let report: string;
-  if (useRealLLM) {
+  if (useRealLLM()) {
     const evidenceDigest = state.evidence
       .map((e, i) => `[${i + 1}] (${e.source.domain}, cred ${e.source.credibility.toFixed(2)}) ${e.claim}`)
       .join("\n");
@@ -353,7 +353,7 @@ function synthReport(state: ResearchState): string {
 export const criticNode: Node = async (state, ctx) => {
   await ctx.emitter.emit({ type: "status", status: "reviewing" });
   let reflection: Reflection;
-  if (useRealLLM) {
+  if (useRealLLM()) {
     const messages: ChatMessage[] = [
       {
         role: "system",

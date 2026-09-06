@@ -1,8 +1,8 @@
-# Security Assessment — Synthesis
+# Security Assessment - Synthesis
 
-**Date:** 2026-08-21  
-**Scope:** Auth, XSS, injection, CORS, secrets, LLM/tool keys, SSE  
-**Context:** Public deploy is a **free-tier multi-agent research demo** on Vercel + Neon. Simulated mode works with no keys; real mode uses Groq + Tavily when env vars are set.
+**Date:** 2026-09-06  
+**Scope:** Auth, XSS, CORS/origin, secrets, LLM keys, SSE, rate limits, CSP  
+**Context:** Public demo on Vercel + Neon (synthesis-gold.vercel.app). Simulated mode is default. Real provider spend requires LIVE_MODE=true AND keys (optional PUBLIC_RUN_TOKEN).
 
 ---
 
@@ -10,132 +10,95 @@
 
 | Area | Risk | Notes |
 |------|------|--------|
-| Authentication | **None (accepted)** | No user accounts, sessions, or JWT. Anyone who can open the URL can launch a brief. |
-| Authorization | **N/A** | HITL “Approve & execute” is a UX gate, not an ACL. |
-| XSS | **Low–medium** | Report Markdown is rendered via `react-markdown`. No `dangerouslySetInnerHTML` in app code. |
-| Injection (SQL) | **Low** | Drizzle parameterized queries. Brief length-capped at 1000 chars. |
-| Secrets in repo | **Low** | `.env` gitignored; `.env.example` placeholders only. `drizzle.config.json` uses a local placeholder URL, not production Neon. |
-| SSRF (tools) | **Accepted (demo)** | `read_url` / Jina fetch arbitrary URLs when a key is set. Simulated mode does not egress. |
-| Prompt injection | **Accepted (demo)** | Retrieved web text is fed to the LLM. No production isolation of untrusted content. |
-| CORS | **N/A** | Same-origin Next.js API routes. |
-| Payments / PII | **N/A** | No payments, no user PII store. Research briefs may contain whatever the visitor types. |
-| Build config | **OK** | No `ignoreBuildErrors`. `tsc --noEmit` in CI. |
+| Authentication | None (accepted) | No accounts. Anyone can launch a simulated brief. |
+| Authorization | N/A | HITL Approve is UX, not an ACL. |
+| XSS | Low-medium | react-markdown; no dangerouslySetInnerHTML. CSP + frame deny. |
+| SQL | Low | Drizzle parameterized. Brief capped at 1000 chars. |
+| Secrets in repo | Low | .env* gitignored; .env.example placeholders only. |
+| Tool egress | Accepted (demo) | Live fetch only when live gate passes. |
+| Prompt risk | Accepted (demo) | Live mode feeds retrieved text to the LLM. |
+| Origin | Mitigated | Expensive routes reject cross-origin Origin/Referer. |
+| Rate limit | Mitigated | In-memory ~10/min/IP on run, approve, eval. |
+| Live spend | Mitigated | Need LIVE_MODE=true (+ optional x-run-token). Keys alone are not enough. |
 
-**Overall (public Vercel demo):** Low residual risk for a portfolio demo — no auth, no payments, budget-capped agent loop.  
-**Overall (if this were a production research product):** High — unauthenticated spend against LLM/search APIs, prompt injection via retrieved pages, no tenant isolation.
+Overall (public demo): Not unhackable while public + unauthenticated spend could be turned on - but casual abuse, framing, secret leak via git, and open LLM burn are blocked by defaults.
+Overall (production product): High - no auth, no tenant isolation.
 
-Do **not** claim NextAuth, JWT, or a hardened multi-tenant backend.
+Do not claim NextAuth/JWT/multi-tenant hardening. Intent: portfolio public, then private repos.
 
 ---
 
 ## 1. Authentication
 
-There is none. `/api/run` POST creates a run for any caller. Rate limiting is whatever Vercel/Groq/Tavily apply.
-
-**Accepted for portfolio demo.** If this becomes a product: add auth, per-user quotas, and signed run IDs.
+None. /api/run POST is same-origin + rate-limited.
 
 ---
 
-## 2. Authorization / HITL
+## 2. Live provider gate (2026-09-06)
 
-The planner pauses at `awaiting_approval`. That is a **human-in-the-loop UX checkpoint**, not an authorization boundary. Anyone who can POST `/api/run/:id/approve` can resume that run if they know the numeric id.
+| Condition | Behavior |
+|-----------|----------|
+| LIVE_MODE unset/false | Always simulated (even if Vercel has keys) |
+| LIVE_MODE=true + keys | Live providers allowed |
+| PUBLIC_RUN_TOKEN set | Live only if x-run-token matches; else simulated |
 
----
-
-## 3. XSS
-
-- Product UI is React text for briefs, plans, timeline.
-- The report tab uses `react-markdown` + `remark-gfm` + `rehype-highlight`. Default React escaping applies to most nodes; Markdown HTML-in-markdown is the residual risk.
-- No `dangerouslySetInnerHTML` in `src/`.
+Client flags cannot force live spend.
 
 ---
 
-## 4. Injection
+## 3. HTTP hardening (2026-09-06)
 
-- Drizzle ORM for all Postgres access. No string-concatenated SQL.
-- `POST /api/run` validates JSON and caps `brief` at 1000 characters.
-- `compute()` tool allow-lists `[-+*/().\d\s%]` before eval — unit-tested.
+Headers in next.config.ts: X-Content-Type-Options nosniff, X-Frame-Options DENY, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy camera=()/microphone=()/geolocation=(), CSP (default-src self; script/style unsafe-inline for Next; no unsafe-eval; frame-ancestors none; object-src none; base-uri/form-action self).
 
----
-
-## 5. Secrets & LLM keys
-
-- Required: `DATABASE_URL` (or Vercel/Neon `POSTGRES_URL`).
-- Optional: `OPENAI_API_KEY` / `GROQ_API_KEY`, `TAVILY_API_KEY`, `SERPER_API_KEY`, `JINA_API_KEY`.
-- Keys live in Vercel Environment Variables. Never commit Neon connection strings into `drizzle.config.json`.
-- Simulated mode is the default when keys are absent — the demo still runs.
+Guards in src/lib/security/http.ts: same-origin + 10/min/IP.
 
 ---
 
-## 6. SSRF / tool egress
+## 4. HITL
 
-When `TAVILY_API_KEY` / `JINA_API_KEY` are set, researcher tools fetch remote URLs. That is intended. Residual: a crafted brief can steer the agent toward internal IPs if the runtime can reach them.
-
-**Accepted for this demo.** Production would need URL allow-lists and no-RFC1918 fetches.
+awaiting_approval is UX, not ACL. Approve route is still origin-checked and rate-limited.
 
 ---
 
-## 7. Agent budget (abuse cost)
+## 5. XSS
 
-Hard caps in `src/lib/agent/schemas.ts`: max steps 24, max tokens 60k, cost cap $1, max 2 Reflexion revisions. Breach routes to the finalizer instead of looping.
-
-Does **not** replace provider-side rate limits or billing alerts.
+React text + react-markdown. Framing denied.
 
 ---
 
-## 8. HTTP surface
+## 6. Input validation
 
-| Path | Auth | Notes |
-|------|------|--------|
-| `/` | None | App shell; SSR swallows DB errors and shows empty recents |
-| `/api/health` | None | `SELECT 1` against Postgres |
-| `/api/run` GET | None | Recent runs |
-| `/api/run` POST | None | Create + plan |
-| `/api/run/[id]` | None | Replay |
-| `/api/run/[id]/approve` | None | SSE resume |
-| `/api/eval` | None | Golden-set harness (CI). Do not expose to the public internet without auth if eval becomes expensive. |
+Drizzle only. Brief length cap. Calculator charset allow-list (unit-tested).
 
 ---
 
-## 9. Dependency / supply chain
+## 7. Secrets
 
-- No NextAuth, Prisma leftover, z.ai SDK, or unused Testing Library.
-- Removed unused `dotenv` (drizzle-kit ships its own loader).
-- **Kept** `drizzle-orm` + `pg` — they are the production persistence path.
-- Weekly Dependabot (patch/minor only; majors ignored).
-- Do **not** `npm audit fix --force` onto a Next major.
-
-`npm audit --omit=dev` (2026-08-21): **3 high**, all nested under `next@16.2.6` (`next`, nested `postcss`, `sharp`). Clearing them requires `next@16.3.1` via `--force`, which is outside the stated range. Left as residual. `nanoid` was patched without a force bump.
-
-```bash
-npm audit --omit=dev
-```
+DATABASE_URL required. Optional LLM/search keys behind LIVE_MODE / PUBLIC_RUN_TOKEN. Errors truncated; keys never returned.
 
 ---
 
-## 10. Residual risk & acceptance
+## 8. Tool egress
 
-**Accepted for portfolio demo**
-- Unauthenticated run creation.
-- HITL is UX, not ACL.
-- Prompt injection via retrieved web text.
-- Tool SSRF when search/read keys are present.
-- Public eval endpoint.
-- Next 16.2.6 nested advisories (see §9).
-
-**Not accepted if this were a paid multi-tenant product**
-- Missing auth and quotas.
-- Unsigned run IDs.
-- Unfiltered URL fetch.
+Only when live gate passes. Accepted for demo; production needs URL allow-lists.
 
 ---
 
-## 11. How to re-test
+## 9. Agent budget
 
-```bash
-npm ci
-npm test
-npm run typecheck
-npm run test:e2e
-npm audit --omit=dev
-```
+Max steps 24, tokens 60k, cost cap $1, max 2 Reflexion revisions.
+
+---
+
+## 10. HTTP surface
+
+See route table in repo README. Guarded: /api/run POST, approve, eval.
+
+## 11. Supply chain
+Dependabot patch/minor only.
+## 12. Notes
+Public demo defaults to simulated.
+Enable live only with LIVE_MODE env flag.
+Portfolio demos stay public for now.
+## 13. Re-test
+See package.json scripts for verification.
