@@ -1,5 +1,5 @@
 /**
- * Synthesis — the agent crew.
+ * Synthesis - the agent crew.
  *
  * Each agent is a graph node with TWO implementations behind one interface:
  *   - REAL: when an OpenAI-compatible key is configured, genuine LLM reasoning.
@@ -106,7 +106,7 @@ export const plannerNode: Node = async (state, ctx) => {
 
 /* ------------------------------ Researcher ----------------------------- */
 
-/** Loose schema for LLM-produced evidence — id is assigned locally; credibility coerced. */
+/** Loose schema for LLM-produced evidence - id is assigned locally; credibility coerced. */
 const LlmEvidenceItemSchema = z.object({
   claim: z.string(),
   snippet: z.string().optional().default(""),
@@ -206,7 +206,7 @@ async function runResearcher(state: ResearchState, ctx: SynthesisContext, sq: Su
         });
       }
     } catch {
-      // LLM extract failed (Zod / non-JSON / empty) — fall through to grounded path
+      // LLM extract failed (Zod / non-JSON / empty) - fall through to grounded path
       collected = [];
     }
   }
@@ -222,7 +222,7 @@ async function runResearcher(state: ResearchState, ctx: SynthesisContext, sq: Su
       runId: ctx.runId,
       subQuestionId: item.subQuestionId,
       claim: item.claim,
-      citation: `${item.source.title} — ${item.source.domain}`,
+      citation: `${item.source.title} - ${item.source.domain}`,
       url: item.source.url,
       credibility: item.source.credibility,
       score: item.score,
@@ -342,7 +342,7 @@ function synthReport(state: ResearchState): string {
   );
   lines.push("## Sources & confidence", "");
   citeIndex.forEach((c, i) =>
-    lines.push(`${i + 1}. **${c.source.domain}** — ${c.source.title} (credibility ${(c.source.credibility * 100).toFixed(0)}%)`),
+    lines.push(`${i + 1}. **${c.source.domain}** - ${c.source.title} (credibility ${(c.source.credibility * 100).toFixed(0)}%)`),
   );
   lines.push("");
   return lines.join("\n");

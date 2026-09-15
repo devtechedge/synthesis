@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 /**
- * Synthesis — persistence layer.
+ * Synthesis - persistence layer.
  *
  * Portability note: pgvector is NOT assumed to be installed on the target
  * Postgres (many Vercel Postgres / Neon free DBs don't have it). Embeddings are
@@ -71,7 +71,7 @@ export const documents = pgTable("documents", {
   url: text("url").notNull(),
   title: text("title"),
   content: text("content"),
-  /** JSONB float[] embedding (portable — no pgvector required). */
+  /** JSONB float[] embedding (portable - no pgvector required). */
   embedding: jsonb("embedding").$type<number[]>(),
   metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

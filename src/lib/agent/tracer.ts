@@ -3,7 +3,7 @@ import { runEvents } from "@/db/schema";
 import type { AgentEvent } from "./schemas";
 
 /**
- * Synthesis — observability emitter.
+ * Synthesis - observability emitter.
  *
  * - `emit()` fans an AgentEvent out to BOTH the live SSE consumer (onEvent)
  *   and the durable run_events table (so any run is replayable after the fact).

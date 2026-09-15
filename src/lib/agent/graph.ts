@@ -1,5 +1,5 @@
 /**
- * Synthesis — graph engine.
+ * Synthesis - graph engine.
  *
  * A deliberately small, real state-machine executor in the LangGraph tradition:
  * nodes, fixed edges, conditional (routing) edges, an explicit END, a start node,

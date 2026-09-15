@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * POST /api/run/[id]/approve — Human-in-the-loop resume.
+ * POST /api/run/[id]/approve - Human-in-the-loop resume.
  * Resumes the LangGraph from the planner checkpoint and streams every event
  * back as Server-Sent Events so the UI renders the run live.
  */

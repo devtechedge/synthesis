@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Synthesis — agent domain model.
+ * Synthesis - agent domain model.
  * Every agent I/O is structured & validated (agentic-loop principle #6).
  */
 

@@ -6,7 +6,7 @@ import type { AgentEvent, Status } from "@/lib/agent/schemas";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** GET /api/run/[id] — full run detail incl. replayable event stream + evidence. */
+/** GET /api/run/[id] - full run detail incl. replayable event stream + evidence. */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const runId = Number(id);

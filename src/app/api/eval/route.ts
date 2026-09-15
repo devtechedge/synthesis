@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/eval — automated evaluation harness (the CI quality gate).
+ * GET /api/eval - automated evaluation harness (the CI quality gate).
  *
  * Rate-limited + same-origin guarded. Live providers only when LIVE_MODE gate passes.
  */

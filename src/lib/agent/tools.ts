@@ -1,5 +1,5 @@
 /**
- * Synthesis — tool layer (function-calling surface).
+ * Synthesis - tool layer (function-calling surface).
  *
  * Each tool has a REAL implementation (when the relevant provider key is set)
  * and a GROUNDED simulated fallback so the agent's capability surface is never
@@ -87,7 +87,7 @@ async function simulatedSearch(query: string): Promise<{ query: string; results:
   const templates = [
     {
       domain: "en.wikipedia.org",
-      title: `${capWords(q)} — overview`,
+      title: `${capWords(q)} - overview`,
       snip: `Background on ${q}: definitions, history, and the core mechanisms most commonly cited in the literature, including key metrics and how the field frames the topic today.`,
     },
     {
@@ -109,7 +109,7 @@ async function simulatedSearch(query: string): Promise<{ query: string; results:
     },
     {
       domain: "github.com",
-      title: `Practical implementation notes — ${capWords(q)}`,
+      title: `Practical implementation notes - ${capWords(q)}`,
       snip: `Engineering notes on ${q}: practitioners report that the main challenges are integration complexity and reproducibility, with recommended patterns emerging from production deployments.`,
     },
   ];

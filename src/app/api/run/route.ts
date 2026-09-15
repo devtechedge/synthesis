@@ -10,7 +10,7 @@ import { resolveLiveForRequest, runWithLiveGateAsync } from "@/lib/security/live
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** POST /api/run — create a research run and execute the planning phase (HITL). */
+/** POST /api/run - create a research run and execute the planning phase (HITL). */
 export async function POST(req: Request) {
   const guard = guardExpensivePost(req, "run");
   if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   });
 }
 
-/** GET /api/run — recent runs (visitors can browse past research). */
+/** GET /api/run - recent runs (visitors can browse past research). */
 export async function GET() {
   const rows = await db
     .select({

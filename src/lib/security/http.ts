@@ -1,6 +1,6 @@
 /**
  * Lightweight request guards for public demo API routes.
- * In-memory rate limit resets with the serverless isolate — still blocks casual abuse.
+ * In-memory rate limit resets with the serverless isolate - still blocks casual abuse.
  */
 
 export type GuardResult =
@@ -91,7 +91,7 @@ export function guardExpensivePost(req: Request, keyPrefix = "api"): GuardResult
   return assertRateLimit(req, keyPrefix);
 }
 
-/** Test helper — clear rate-limit buckets between unit tests. */
+/** Test helper - clear rate-limit buckets between unit tests. */
 export function __resetRateLimitBucketsForTests(): void {
   buckets.clear();
 }

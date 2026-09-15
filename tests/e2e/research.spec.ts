@@ -4,7 +4,7 @@ test.describe("HITL plan path", () => {
   test("launching a brief pauses for human approval", async ({ page }) => {
     test.skip(
       !process.env.DATABASE_URL && !process.env.POSTGRES_URL,
-      "Postgres not configured — UI smokes still run in home.spec.ts",
+      "Postgres not configured - UI smokes still run in home.spec.ts",
     );
 
     await page.goto("/");

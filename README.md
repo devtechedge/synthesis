@@ -1,4 +1,4 @@
-# Synthesis — Autonomous Multi-Agent Research Platform
+# Synthesis - Autonomous Multi-Agent Research Platform
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-synthesis--gold.vercel.app-black?style=for-the-badge&logo=vercel)](https://synthesis-gold.vercel.app/)
 [![CI](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml)
@@ -16,8 +16,8 @@
 
 **https://synthesis-gold.vercel.app/**
 
-- **Real LLM path is live** — Groq (`llama-3.3-70b-versatile`) + Tavily web search. Full multi-agent runs with cited reports, Reflexion, and telemetry.
-- **Demo / simulated mode is the default** — works with or without keys. Real LLM/search only when LIVE_MODE=true and keys are set (optional PUBLIC_RUN_TOKEN).
+- **Real LLM path is live** - Groq (`llama-3.3-70b-versatile`) + Tavily web search. Full multi-agent runs with cited reports, Reflexion, and telemetry.
+- **Demo / simulated mode is the default** - works with or without keys. Real LLM/search only when LIVE_MODE=true and keys are set (optional PUBLIC_RUN_TOKEN).
 - Any OpenAI-compatible provider works via `OPENAI_API_KEY` + `OPENAI_BASE_URL` + `OPENAI_MODEL`.
 
 ---
@@ -36,15 +36,15 @@
 
 ## What it does
 
-1. **Brief** — enter a complex research question.
-2. **Planner** — decomposes into research vectors; run **pauses for human-in-the-loop approval**.
-3. **Research crew (parallel fan-out)** — tools (`web_search`, `read_url`), typed evidence, RAG ingest.
-4. **Synthesizer** — cited Markdown report, streamed.
-5. **Critic (Reflexion)** — faithfulness score; bounded revision loop if below threshold.
-6. **Fact-checker** — source credibility audit.
-7. **Finalizer** — confidence + cost/latency dashboard.
+1. **Brief** - enter a complex research question.
+2. **Planner** - decomposes into research vectors; run **pauses for human-in-the-loop approval**.
+3. **Research crew (parallel fan-out)** - tools (`web_search`, `read_url`), typed evidence, RAG ingest.
+4. **Synthesizer** - cited Markdown report, streamed.
+5. **Critic (Reflexion)** - faithfulness score; bounded revision loop if below threshold.
+6. **Fact-checker** - source credibility audit.
+7. **Finalizer** - confidence + cost/latency dashboard.
 
-Every event is persisted — any past run is replayable.
+Every event is persisted - any past run is replayable.
 
 ---
 
@@ -52,7 +52,7 @@ Every event is persisted — any past run is replayable.
 
 | Principle | Implementation |
 |---|---|
-| **Loop is a graph, not a `while`** | `StateGraph` executor — nodes, conditional edges, explicit `END`. |
+| **Loop is a graph, not a `while`** | `StateGraph` executor - nodes, conditional edges, explicit `END`. |
 | **Plan → Act → Observe → Reflect** | ReAct tools + Reflexion critic with bounded revisions. |
 | **Bounded autonomy + budget** | Max steps / tokens / cost / wall-clock → graceful finalize. |
 | **Human-in-the-loop** | Planner checkpoint → `awaiting_approval` → resume on approve. |
@@ -84,7 +84,7 @@ Browser ──SSE──▶ Next.js (App Router) ──▶ Orchestration (StateGr
    Postgres: runs · checkpoints · events · documents · evidence · memories · eval_runs
 ```
 
-**Portability:** embeddings as JSONB float arrays (no pgvector required) — runs on any Neon / Vercel Postgres free DB.
+**Portability:** embeddings as JSONB float arrays (no pgvector required) - runs on any Neon / Vercel Postgres free DB.
 
 ---
 
@@ -120,7 +120,7 @@ npm run dev
 Open http://localhost:3000.
 
 ### Demo mode (no keys)
-Deterministic grounded engine — full graph, HITL, telemetry, eval. **Deployed demo always works.**
+Deterministic grounded engine - full graph, HITL, telemetry, eval. **Deployed demo always works.**
 
 ### Real mode
 ```
@@ -136,10 +136,10 @@ TAVILY_API_KEY=...                        # live web search
 
 [![CI](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml)
 
-- **Unit tests** — Zod schemas, token/cost math, cosine, tool allow-lists, StateGraph termination, Reflexion routing (`npm test`)
-- **Typecheck** — `tsc --noEmit`
-- **Playwright** — Chromium smokes for idle chrome + HITL plan pause (`npm run test:e2e`)
-- **Eval gate** — `GET /api/eval?limit=2` golden set (simulated engine, Postgres service)
+- **Unit tests** - Zod schemas, token/cost math, cosine, tool allow-lists, StateGraph termination, Reflexion routing (`npm test`)
+- **Typecheck** - `tsc --noEmit`
+- **Playwright** - Chromium smokes for idle chrome + HITL plan pause (`npm run test:e2e`)
+- **Eval gate** - `GET /api/eval?limit=2` golden set (simulated engine, Postgres service)
 
 ```bash
 npm ci
@@ -155,16 +155,16 @@ Threat model: [SECURITY.md](./SECURITY.md).
 ## Deploy (Vercel free tier)
 
 1. Import the GitHub repo on Vercel.
-2. Add Neon Postgres (Storage → Create Database → Neon) — `DATABASE_URL` is injected automatically.
+2. Add Neon Postgres (Storage → Create Database → Neon) - `DATABASE_URL` is injected automatically.
 3. Optional: Groq + Tavily env vars. Real spend also needs LIVE_MODE=true (keep false on public demos).
-4. Optional: PUBLIC_RUN_TOKEN — live calls must send matching x-run-token.
+4. Optional: PUBLIC_RUN_TOKEN - live calls must send matching x-run-token.
 5. Redeploy and open the live URL.
 
 ---
 
 ## Environment
 
-See [`.env.example`](./.env.example). Only `DATABASE_URL` is required. Provider keys alone do not enable live spend — set LIVE_MODE=true (and optionally PUBLIC_RUN_TOKEN). Details: [SECURITY.md](./SECURITY.md).
+See [`.env.example`](./.env.example). Only `DATABASE_URL` is required. Provider keys alone do not enable live spend - set LIVE_MODE=true (and optionally PUBLIC_RUN_TOKEN). Details: [SECURITY.md](./SECURITY.md).
 
 ---
 
@@ -179,7 +179,7 @@ See [`.env.example`](./.env.example). Only `DATABASE_URL` is required. Provider 
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT - see [LICENSE](./LICENSE).
 
 See also [SECURITY.md](./SECURITY.md).
 

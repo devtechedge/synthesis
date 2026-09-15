@@ -1,5 +1,5 @@
 /**
- * Synthesis — LLM abstraction.
+ * Synthesis - LLM abstraction.
  *
  * Real reasoning only when LIVE_MODE=true and keys are present (and optional
  * PUBLIC_RUN_TOKEN matches). Otherwise agents use the deterministic simulator
@@ -69,7 +69,7 @@ export async function complete(
   opts?: { temperature?: number; json?: boolean },
 ): Promise<CompletionResult> {
   if (!useRealLLM()) {
-    throw new Error("complete() called without an API key — agent should use its simulator fallback.");
+    throw new Error("complete() called without an API key - agent should use its simulator fallback.");
   }
   const temperature = opts?.temperature ?? 0.2;
   const body: Record<string, unknown> = {

@@ -260,7 +260,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
             disabled={busy}
             rows={2}
             data-testid="brief-input"
-            placeholder="Ask a complex research question — the crew will plan, search, retrieve, synthesize, critique, and return a cited report with a confidence score."
+            placeholder="Ask a complex research question - the crew will plan, search, retrieve, synthesize, critique, and return a cited report with a confidence score."
             className="w-full resize-none rounded-xl border border-white/10 bg-[#0b0e1a] px-3.5 py-3 text-sm text-slate-100 placeholder:text-slate-600 focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/40 disabled:opacity-50"
           />
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -305,7 +305,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
         {phase === "awaiting" && plan && (
           <section className="mt-5 rounded-2xl border border-amber-400/25 bg-amber-500/[0.06] p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold text-amber-200">🟡 Plan ready — human approval required</h2>
+              <h2 className="text-sm font-bold text-amber-200">🟡 Plan ready - human approval required</h2>
               <button
                 onClick={approve}
                 data-testid="approve-execute"

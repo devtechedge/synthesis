@@ -53,7 +53,7 @@ function getInstance(): DB {
 }
 
 /**
- * LAZY database client — exported as a drop-in `db`.
+ * LAZY database client - exported as a drop-in `db`.
  *
  * Why a Proxy: Next.js evaluates route modules during `next build` ("collecting
  * page data") to gather metadata, even for dynamic routes. If we eagerly created

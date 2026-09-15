@@ -14,7 +14,7 @@ const faviconSvg =
   );
 
 export const metadata: Metadata = {
-  title: "Synthesis — Autonomous Multi-Agent Research Platform",
+  title: "Synthesis - Autonomous Multi-Agent Research Platform",
   description:
     "A Vercel-native agentic research system: LangGraph.js orchestration, ReAct + Reflexion loops, hybrid RAG, HITL approval, streaming, observability, and an eval gate. Deploy on GitHub + Vercel, free tier only.",
   keywords: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     icon: faviconSvg,
   },
   openGraph: {
-    title: "Synthesis — Autonomous Multi-Agent Research Platform",
+    title: "Synthesis - Autonomous Multi-Agent Research Platform",
     description:
       "Plan → research → synthesize → critique → finalize. A cited, confidence-scored agentic research system.",
     type: "website",

@@ -1,5 +1,5 @@
 /**
- * Synthesis — orchestration engine.
+ * Synthesis - orchestration engine.
  *
  * Wires the agent crew into a LangGraph-style StateGraph and runs it. The
  * "engine" is a thin composition layer: the architecture is the interfaces,
@@ -46,7 +46,7 @@ const NODE_META: Record<string, { agent: string; label: string }> = {
   finalizer: { agent: "finalizer", label: "Assembling final artifacts" },
 };
 
-/** The Reflexion routing decision — bounded loop, never open-ended. */
+/** The Reflexion routing decision - bounded loop, never open-ended. */
 export function criticRouter(state: ResearchState): string {
   const r = state.reflection;
   if (r && r.recommendation === "revise" && state.budget.revisionsUsed <= MAX_REVISIONS) {
