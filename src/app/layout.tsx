@@ -36,6 +36,7 @@ export const metadata: Metadata = {
     description:
       "Plan → research → synthesize → critique → finalize. A cited, confidence-scored agentic research system.",
     type: "website",
+    images: [{ url: 'https://synthesis-gold.vercel.app/og.png', width: 1200, height: 630, alt: 'synthesis' }],
   },
 };
 
