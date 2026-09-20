@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-06  
 **Scope:** Auth, XSS, CORS/origin, secrets, LLM keys, SSE, rate limits, CSP  
-**Context:** Public demo on Vercel + Neon (synthesis-gold.vercel.app). Simulated mode is default. Real provider spend requires LIVE_MODE=true AND keys (optional PUBLIC_RUN_TOKEN).
+**Context:** Public demo on Vercel + Neon (synthesis-agent.vercel.app). Simulated mode is default. Real provider spend requires LIVE_MODE=true AND keys (optional PUBLIC_RUN_TOKEN).
 
 ---
 
