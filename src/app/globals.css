@@ -254,6 +254,43 @@ body {
   }
 }
 
+/* HITL approval — violet system focus, not amber warning */
+.approval-panel {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in oklab, var(--accent) 45%, var(--border));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--accent) 14%, transparent),
+      color-mix(in oklab, var(--accent-2) 6%, var(--surface))
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--accent) 18%, transparent),
+    0 12px 40px -16px color-mix(in oklab, var(--accent) 45%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+[data-theme="light"] .approval-panel {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--accent) 10%, #ffffff),
+      color-mix(in oklab, var(--accent-2) 4%, #ffffff)
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--accent) 22%, transparent),
+    0 14px 36px -18px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+.approval-pulse {
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent);
+  animation: approval-pulse 1.8s ease-in-out infinite;
+}
+@keyframes approval-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 50%, transparent); opacity: 1; }
+  50% { box-shadow: 0 0 0 6px transparent; opacity: 0.75; }
+}
+
 /* Report / content pane: contained reading height */
 .report-pane {
   max-height: min(70vh, 720px);

@@ -324,25 +324,30 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
 
         {/* Plan approval (HITL) */}
         {phase === "awaiting" && plan && (
-          <section className="mt-5 rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold text-amber-700 dark:text-amber-200">🟡 Plan ready - human approval required</h2>
+          <section className="approval-panel mt-5 p-4 sm:p-5" data-testid="plan-approval">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="approval-pulse h-2 w-2 shrink-0 rounded-full bg-violet-500 dark:bg-fuchsia-400" aria-hidden />
+                <h2 className="text-sm font-bold tracking-tight text-violet-700 dark:text-violet-100">
+                  Plan ready — human approval required
+                </h2>
+              </div>
               <button
                 onClick={approve}
                 data-testid="approve-execute"
-                className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:scale-[1.02]"
+                className="rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-500/35 transition hover:scale-[1.02] hover:shadow-violet-500/50"
               >
                 ✓ Approve &amp; execute
               </button>
             </div>
-            <p className="mb-3 text-xs text-amber-800/80 dark:text-amber-100/70">{plan.rationale}</p>
+            <p className="mb-3 text-xs leading-relaxed text-soft">{plan.rationale}</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {plan.subQuestions.map((s, i) => (
-                <div key={s.id} className="panel-solid px-3 py-2">
-                  <p className="text-xs font-semibold text-body">
+                <div key={s.id} className="approval-step rounded-xl border border-theme bg-[var(--surface-raised)] px-3 py-2.5">
+                  <p className="text-xs font-semibold text-heading">
                     {i + 1}. {s.question}
                   </p>
-                  <p className="mt-1 font-mono text-[0.7rem] text-dim">strategy: {s.strategy}</p>
+                  <p className="mt-1 font-mono text-[0.7rem] text-soft">strategy: {s.strategy}</p>
                 </div>
               ))}
             </div>
@@ -414,8 +419,8 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
 function StatusBadge({ phase }: { phase: Phase }) {
   const map: Record<Phase, { label: string; cls: string; dot: string }> = {
     idle: { label: "Idle", cls: "border-[var(--border)] text-soft", dot: "bg-slate-400" },
-    planning: { label: "Planning", cls: "border-amber-400/40 text-amber-600 dark:text-amber-300", dot: "bg-amber-400" },
-    awaiting: { label: "Awaiting approval", cls: "border-amber-400/40 text-amber-600 dark:text-amber-300", dot: "bg-amber-400" },
+    planning: { label: "Planning", cls: "border-violet-400/40 text-violet-600 dark:text-violet-300", dot: "bg-violet-400" },
+    awaiting: { label: "Awaiting approval", cls: "border-fuchsia-400/45 text-fuchsia-700 dark:text-fuchsia-300", dot: "bg-fuchsia-400 pulse-dot" },
     running: { label: "Running", cls: "border-violet-400/40 text-violet-600 dark:text-violet-300", dot: "bg-violet-400" },
     done: { label: "Done", cls: "border-emerald-400/40 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-400" },
     error: { label: "Error", cls: "border-red-400/40 text-red-600 dark:text-red-300", dot: "bg-red-400" },
