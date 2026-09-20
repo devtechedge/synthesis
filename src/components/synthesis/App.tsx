@@ -96,11 +96,14 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
   const onEvent = useCallback((e: AgentEvent & { seq?: number }) => {
     switch (e.type) {
       case "status":
+        // Each synthesizer pass streams a full report; clear so revisions replace, not concatenate.
+        if (e.status === "synthesizing") setReport("");
         if (e.status === "done") setPhase("done");
         if (e.status === "error") setPhase("error");
         break;
       case "node_start":
         setActiveNode(e.node);
+        if (e.node === "synthesizer") setReport("");
         break;
       case "node_end":
         setNodeDone((p) => ({ ...p, [e.node]: true }));
