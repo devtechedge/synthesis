@@ -10,7 +10,7 @@ function ReportViewBase({ markdown, streaming }: { markdown: string; streaming?:
   }
 
   return (
-    <div className="markdown-body prose prose-sm relative max-w-none dark:prose-invert">
+    <div className="markdown-body prose relative max-w-none font-sans dark:prose-invert">
       {streaming && (
         <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-fuchsia-400 align-middle" aria-hidden />
       )}

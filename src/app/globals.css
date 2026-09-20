@@ -263,7 +263,7 @@ body {
   overscroll-behavior: contain;
 }
 
-/* Markdown theming */
+/* Markdown theming — same Inter face + size as chrome (not typography serif / prose-sm) */
 .markdown-body {
   --tw-prose-body: var(--fg);
   --tw-prose-headings: var(--fg-heading);
@@ -280,8 +280,12 @@ body {
   --tw-prose-td-borders: var(--border);
   --tw-prose-code: color-mix(in oklab, var(--accent) 85%, var(--fg));
   color: var(--fg);
+  font-family: var(--font-sans);
   font-size: 0.9375rem;
-  line-height: 1.7;
+  line-height: 1.65;
+}
+.markdown-body :where(p, li, h1, h2, h3, h4, h5, h6, blockquote, td, th, a, strong, em, ul, ol, dl, dt, dd) {
+  font-family: var(--font-sans);
 }
 .markdown-body :where(h1, h2, h3, h4) {
   color: var(--fg-heading);
@@ -297,6 +301,7 @@ body {
 }
 .markdown-body :where(p, li) {
   color: var(--fg);
+  font-size: inherit;
 }
 .markdown-body :where(table) {
   font-size: 0.875rem;
@@ -321,6 +326,7 @@ body {
   border-radius: 0 0.6rem 0.6rem 0;
   padding-top: 0.6rem;
   padding-bottom: 0.6rem;
+  font-style: normal;
 }
 .markdown-body :where(code) {
   font-family: var(--font-mono);
@@ -330,6 +336,9 @@ body {
   background: var(--inset) !important;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
+}
+.markdown-body :where(pre code) {
+  font-family: var(--font-mono);
 }
 
 /* Animated gradient text */
