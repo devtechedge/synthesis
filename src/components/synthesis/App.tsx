@@ -39,6 +39,8 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
   const [tab, setTab] = useState<Tab>("timeline");
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const paneScrollRef = useRef<HTMLDivElement | null>(null);
+  const paneScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refreshRuns = useCallback(async () => {
     try {
@@ -228,17 +230,32 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
   const busy = phase === "planning" || phase === "running";
   const showDashboard = phase !== "idle";
 
+  useEffect(() => {
+    const el = paneScrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      el.classList.add("is-scrolling");
+      if (paneScrollTimer.current) clearTimeout(paneScrollTimer.current);
+      paneScrollTimer.current = setTimeout(() => el.classList.remove("is-scrolling"), 800);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (paneScrollTimer.current) clearTimeout(paneScrollTimer.current);
+    };
+  }, [showDashboard, tab]);
+
   return (
     <div className="app-bg min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05060f]/80 backdrop-blur-xl">
+      <header className="chrome-header sticky top-0 z-40">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-400 text-base font-black text-white shadow-lg shadow-violet-900/40">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-400 text-base font-black text-white shadow-lg shadow-violet-500/25">
               S
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-bold tracking-tight text-white">Synthesis</p>
-              <p className="hidden text-[0.68rem] text-slate-400 sm:block">Autonomous Multi-Agent Research Platform</p>
+              <p className="text-sm font-bold tracking-tight text-heading">Synthesis</p>
+              <p className="hidden text-[0.68rem] text-dim sm:block">Autonomous Multi-Agent Research Platform</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -250,8 +267,8 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {/* Brief intake */}
-        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <section className="panel p-4 sm:p-5">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-dim">
             Research brief
           </label>
           <textarea
@@ -261,7 +278,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
             rows={2}
             data-testid="brief-input"
             placeholder="Ask a complex research question - the crew will plan, search, retrieve, synthesize, critique, and return a cited report with a confidence score."
-            className="w-full resize-none rounded-xl border border-white/10 bg-[#0b0e1a] px-3.5 py-3 text-sm text-slate-100 placeholder:text-slate-600 focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/40 disabled:opacity-50"
+            className="input-surface w-full resize-none rounded-xl px-3.5 py-3 text-sm focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/40 disabled:opacity-50"
           />
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {!showDashboard && (
@@ -269,7 +286,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
                 onClick={startRun}
                 disabled={!brief.trim() || busy}
                 data-testid="launch-research"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 🚀 Launch research
               </button>
@@ -277,7 +294,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
             {showDashboard && (
               <button
                 onClick={reset}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-theme bg-transparent px-4 py-2.5 text-sm font-semibold text-body transition hover:bg-[var(--surface-raised)]"
               >
                 ✚ New brief
               </button>
@@ -288,40 +305,44 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
                   key={ex}
                   onClick={() => setBrief(ex)}
                   data-testid="example-prompt"
-                  className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition hover:border-violet-400/40 hover:text-violet-200"
+                  className="rounded-lg border border-theme bg-transparent px-2.5 py-1.5 text-xs text-dim transition hover:border-violet-400/40 hover:text-[color:var(--accent)]"
                 >
                   {ex.length > 42 ? ex.slice(0, 42) + "…" : ex}
                 </button>
               ))}
-            <span className="ml-auto text-[0.7rem] text-slate-600">
-              Engine: <span className="text-slate-400">LangGraph.js</span> · {evidence.length} evidence ·{" "}
+            <span className="ml-auto font-mono text-[0.7rem] text-dim">
+              Engine: <span className="text-soft">LangGraph.js</span> · {evidence.length} evidence ·{" "}
               {finalStats ? `${(finalStats.tokens / 1000).toFixed(1)}k tok` : "—"}
             </span>
           </div>
-          {error && <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{error}</p>}
+          {error && (
+            <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400 dark:text-red-300">
+              {error}
+            </p>
+          )}
         </section>
 
         {/* Plan approval (HITL) */}
         {phase === "awaiting" && plan && (
-          <section className="mt-5 rounded-2xl border border-amber-400/25 bg-amber-500/[0.06] p-4 sm:p-5">
+          <section className="mt-5 rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold text-amber-200">🟡 Plan ready - human approval required</h2>
+              <h2 className="text-sm font-bold text-amber-700 dark:text-amber-200">🟡 Plan ready - human approval required</h2>
               <button
                 onClick={approve}
                 data-testid="approve-execute"
-                className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-emerald-900/30 transition hover:scale-[1.02]"
+                className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:scale-[1.02]"
               >
                 ✓ Approve &amp; execute
               </button>
             </div>
-            <p className="mb-3 text-xs text-amber-100/70">{plan.rationale}</p>
+            <p className="mb-3 text-xs text-amber-800/80 dark:text-amber-100/70">{plan.rationale}</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {plan.subQuestions.map((s, i) => (
-                <div key={s.id} className="rounded-lg border border-white/10 bg-[#0b0e1a] px-3 py-2">
-                  <p className="text-xs font-semibold text-slate-200">
+                <div key={s.id} className="panel-solid px-3 py-2">
+                  <p className="text-xs font-semibold text-body">
                     {i + 1}. {s.question}
                   </p>
-                  <p className="mt-1 text-[0.7rem] text-slate-500">strategy: {s.strategy}</p>
+                  <p className="mt-1 font-mono text-[0.7rem] text-dim">strategy: {s.strategy}</p>
                 </div>
               ))}
             </div>
@@ -332,34 +353,38 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
         {showDashboard && (
           <section className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-5">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="panel p-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Agent graph</h3>
-                  {activeNode && <span className="text-[0.7rem] text-violet-300">executing: {activeNode}</span>}
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-dim">Agent graph</h3>
+                  {activeNode && <span className="font-mono text-[0.7rem] text-violet-500 dark:text-violet-300">executing: {activeNode}</span>}
                 </div>
                 <AgentGraph activeNode={activeNode} done={nodeDone} />
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="mb-3 flex gap-1 rounded-lg bg-black/30 p-1">
+              <div className="panel flex min-h-0 flex-col p-4">
+                <div className="tab-rail mb-3 flex gap-1 p-1">
                   {(["timeline", "report", "evidence"] as Tab[]).map((t) => (
                     <button
                       key={t}
                       onClick={() => setTab(t)}
                       className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold capitalize transition ${
-                        tab === t ? "bg-violet-500/30 text-violet-100" : "text-slate-400 hover:text-slate-200"
+                        tab === t
+                          ? "bg-violet-500/25 text-violet-700 shadow-sm dark:bg-violet-500/30 dark:text-violet-100"
+                          : "text-dim hover:text-body"
                       }`}
                     >
                       {t}
                       {t === "evidence" && evidence.length > 0 && (
-                        <span className="ml-1 text-slate-500">({evidence.length})</span>
+                        <span className="ml-1 text-dim">({evidence.length})</span>
                       )}
                     </button>
                   ))}
                 </div>
-                {tab === "timeline" && <Timeline entries={entries} />}
-                {tab === "report" && <ReportView markdown={report} streaming={phase === "running"} />}
-                {tab === "evidence" && <EvidenceList items={evidence} />}
+                <div ref={paneScrollRef} className="report-pane scrollbar-overlay min-h-0" tabIndex={0}>
+                  {tab === "timeline" && <Timeline entries={entries} />}
+                  {tab === "report" && <ReportView markdown={report} streaming={phase === "running"} />}
+                  {tab === "evidence" && <EvidenceList items={evidence} />}
+                </div>
               </div>
             </div>
 
@@ -379,7 +404,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
         )}
       </main>
 
-      <footer className="border-t border-white/10 py-6 text-center text-xs text-slate-600">
+      <footer className="border-t border-theme py-6 text-center font-mono text-xs text-dim">
         Synthesis · agentic-loop engineering · plan → research → synthesize → critique → finalize · deploy on GitHub + Vercel
       </footer>
     </div>
@@ -388,18 +413,18 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
 
 function StatusBadge({ phase }: { phase: Phase }) {
   const map: Record<Phase, { label: string; cls: string; dot: string }> = {
-    idle: { label: "Idle", cls: "border-slate-500/30 text-slate-300", dot: "bg-slate-400" },
-    planning: { label: "Planning", cls: "border-amber-400/30 text-amber-300", dot: "bg-amber-400" },
-    awaiting: { label: "Awaiting approval", cls: "border-amber-400/30 text-amber-300", dot: "bg-amber-400" },
-    running: { label: "Running", cls: "border-violet-400/30 text-violet-300", dot: "bg-violet-400" },
-    done: { label: "Done", cls: "border-emerald-400/30 text-emerald-300", dot: "bg-emerald-400" },
-    error: { label: "Error", cls: "border-red-400/30 text-red-300", dot: "bg-red-400" },
+    idle: { label: "Idle", cls: "border-[var(--border)] text-soft", dot: "bg-slate-400" },
+    planning: { label: "Planning", cls: "border-amber-400/40 text-amber-600 dark:text-amber-300", dot: "bg-amber-400" },
+    awaiting: { label: "Awaiting approval", cls: "border-amber-400/40 text-amber-600 dark:text-amber-300", dot: "bg-amber-400" },
+    running: { label: "Running", cls: "border-violet-400/40 text-violet-600 dark:text-violet-300", dot: "bg-violet-400" },
+    done: { label: "Done", cls: "border-emerald-400/40 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-400" },
+    error: { label: "Error", cls: "border-red-400/40 text-red-600 dark:text-red-300", dot: "bg-red-400" },
   };
   const s = map[phase];
   return (
     <span
       data-testid="status-badge"
-      className={`inline-flex items-center gap-1.5 rounded-full border bg-white/5 px-3 py-1 text-xs font-medium ${s.cls}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border bg-[var(--surface-raised)] px-3 py-1 text-xs font-medium ${s.cls}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${s.dot} ${phase === "running" ? "pulse-dot" : ""}`} />
       {s.label}
@@ -418,15 +443,15 @@ function BudgetPanel({
 }) {
   const conf = finalStats?.confidence ?? 0;
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Telemetry</h3>
+    <div className="panel p-4">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dim">Telemetry</h3>
       <dl className="grid grid-cols-2 gap-3 text-center">
         <Stat label="Confidence" value={finalStats ? `${(conf * 100).toFixed(0)}%` : "—"} accent={conf >= 0.8 ? "emerald" : "amber"} />
         <Stat label="Cost (USD)" value={finalStats ? `$${finalStats.costUsd.toFixed(4)}` : "—"} />
         <Stat label="Tokens" value={finalStats ? finalStats.tokens.toLocaleString() : "—"} />
         <Stat label="Latency" value={finalStats ? `${(finalStats.latencyMs / 1000).toFixed(1)}s` : phase === "running" ? "…" : "—"} />
       </dl>
-      <div className="mt-3 flex items-center justify-between text-[0.7rem] text-slate-500">
+      <div className="mt-3 flex items-center justify-between font-mono text-[0.7rem] text-dim">
         <span>evidence: {evidenceCount}</span>
         <span>budget-capped · resumable</span>
       </div>
@@ -435,11 +460,16 @@ function BudgetPanel({
 }
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: "emerald" | "amber" }) {
-  const c = accent === "emerald" ? "text-emerald-300" : accent === "amber" ? "text-amber-300" : "text-slate-100";
+  const c =
+    accent === "emerald"
+      ? "text-emerald-600 dark:text-emerald-300"
+      : accent === "amber"
+        ? "text-amber-600 dark:text-amber-300"
+        : "text-heading";
   return (
-    <div className="rounded-lg border border-white/5 bg-black/20 px-2 py-2">
-      <dd className={`text-base font-bold ${c}`}>{value}</dd>
-      <dt className="mt-0.5 text-[0.62rem] uppercase tracking-wider text-slate-500">{label}</dt>
+    <div className="surface-inset rounded-lg px-2 py-2">
+      <dd className={`font-mono text-base font-bold ${c}`}>{value}</dd>
+      <dt className="mt-0.5 text-[0.62rem] uppercase tracking-wider text-dim">{label}</dt>
     </div>
   );
 }
@@ -447,19 +477,23 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 function ReflectionCard({ reflection }: { reflection: Reflection }) {
   const pct = Math.round(reflection.faithfulness * 100);
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Critic / Reflexion</h3>
-      <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-black/40">
+    <div className="panel p-4">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-dim">Critic / Reflexion</h3>
+      <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-[var(--inset)]">
         <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <p className="text-xs text-slate-300">
-        Faithfulness <span className="font-bold text-slate-100">{pct}%</span> · recommendation{" "}
-        <span className={reflection.recommendation === "accept" ? "text-emerald-300" : "text-amber-300"}>{reflection.recommendation}</span>
+      <p className="text-xs text-soft">
+        Faithfulness <span className="font-bold text-heading">{pct}%</span> · recommendation{" "}
+        <span className={reflection.recommendation === "accept" ? "text-emerald-600 dark:text-emerald-300" : "text-amber-600 dark:text-amber-300"}>
+          {reflection.recommendation}
+        </span>
       </p>
       {reflection.unsupportedClaims.length > 0 && (
         <ul className="mt-2 space-y-1">
           {reflection.unsupportedClaims.map((c, i) => (
-            <li key={i} className="text-[0.7rem] text-slate-500">• {c}</li>
+            <li key={i} className="text-[0.7rem] text-dim">
+              • {c}
+            </li>
           ))}
         </ul>
       )}
@@ -468,14 +502,14 @@ function ReflectionCard({ reflection }: { reflection: Reflection }) {
 }
 
 function EvidenceList({ items }: { items: EvidenceItem[] }) {
-  if (items.length === 0) return <p className="text-sm text-slate-600">No evidence gathered yet.</p>;
+  if (items.length === 0) return <p className="text-sm text-dim">No evidence gathered yet.</p>;
   return (
-    <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1">
+    <div className="space-y-2 pr-1">
       {items.map((e) => (
-        <div key={e.id} className="rounded-lg border border-white/5 bg-black/20 px-3 py-2">
-          <p className="text-xs text-slate-300">{e.claim}</p>
-          <div className="mt-1 flex items-center gap-2 text-[0.68rem] text-slate-500">
-            <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-violet-300">{e.source.domain}</span>
+        <div key={e.id} className="surface-inset rounded-lg px-3 py-2">
+          <p className="text-xs text-body">{e.claim}</p>
+          <div className="mt-1 flex items-center gap-2 font-mono text-[0.68rem] text-dim">
+            <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-violet-600 dark:text-violet-300">{e.source.domain}</span>
             <span>cred {(e.source.credibility * 100).toFixed(0)}%</span>
             <span>rel {(e.score * 100).toFixed(0)}%</span>
           </div>
@@ -496,20 +530,28 @@ function RecentRuns({
 }) {
   if (runs.length === 0) return null;
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Recent runs</h3>
-      <div className="max-h-[260px] space-y-1 overflow-y-auto pr-1">
+    <div className="panel p-4">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dim">Recent runs</h3>
+      <div className="max-h-[260px] space-y-1 overflow-y-auto pr-1 scrollbar-overlay">
         {runs.map((r) => (
           <button
             key={r.id}
             onClick={() => onPick(r.id)}
             className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition ${
-              currentId === r.id ? "border-violet-400/40 bg-violet-500/10" : "border-white/5 bg-black/20 hover:bg-white/5"
+              currentId === r.id
+                ? "border-violet-400/40 bg-violet-500/10"
+                : "border-theme bg-[var(--inset)] hover:bg-[var(--surface-raised)]"
             }`}
           >
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${r.status === "done" ? "bg-emerald-400" : r.status === "error" ? "bg-red-400" : "bg-slate-500"}`} />
-            <span className="min-w-0 flex-1 truncate text-xs text-slate-300">{r.brief}</span>
-            {r.confidence != null && <span className="shrink-0 text-[0.65rem] text-slate-500">{(r.confidence * 100).toFixed(0)}%</span>}
+            <span
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                r.status === "done" ? "bg-emerald-400" : r.status === "error" ? "bg-red-400" : "bg-slate-500"
+              }`}
+            />
+            <span className="min-w-0 flex-1 truncate text-xs text-soft">{r.brief}</span>
+            {r.confidence != null && (
+              <span className="shrink-0 font-mono text-[0.65rem] text-dim">{(r.confidence * 100).toFixed(0)}%</span>
+            )}
           </button>
         ))}
       </div>
