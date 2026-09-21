@@ -268,7 +268,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-6 pb-10 sm:px-6 sm:pb-12">
         {/* Brief intake */}
         <section className="panel p-4 sm:p-5">
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-dim">
@@ -308,7 +308,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
                   key={ex}
                   onClick={() => setBrief(ex)}
                   data-testid="example-prompt"
-                  className="rounded-lg border border-theme bg-transparent px-2.5 py-1.5 text-xs text-dim transition hover:border-violet-400/40 hover:text-[color:var(--accent)]"
+                  className="max-w-full rounded-lg border border-theme bg-transparent px-2.5 py-1.5 text-left text-xs text-dim transition hover:border-violet-400/40 hover:text-[color:var(--accent)] sm:max-w-[min(100%,28rem)]"
                 >
                   {ex.length > 42 ? ex.slice(0, 42) + "…" : ex}
                 </button>
@@ -412,7 +412,7 @@ export default function SynthesisApp({ initialRuns }: { initialRuns: RunSummary[
         )}
       </main>
 
-      <footer className="border-t border-theme py-6 text-center font-mono text-xs text-dim">
+      <footer className="mt-4 border-t border-theme px-4 py-8 text-center font-mono text-xs text-dim sm:px-6">
         Synthesis · agentic-loop engineering · plan → research → synthesize → critique → finalize · deploy on GitHub + Vercel
       </footer>
     </div>
