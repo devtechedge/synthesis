@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 const faviconSvg =
   "data:image/svg+xml," +
@@ -36,6 +49,7 @@ export const metadata: Metadata = {
     description:
       "Plan → research → synthesize → critique → finalize. A cited, confidence-scored agentic research system.",
     type: "website",
+    images: [{ url: "https://synthesis-agent.vercel.app/og.png", width: 1200, height: 630, alt: "synthesis" }],
   },
 };
 
@@ -43,11 +57,11 @@ const THEME_BOOT = `(function(){try{var k="synthesis-theme";var t=localStorage.g
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrains.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
-      <body>{children}</body>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }

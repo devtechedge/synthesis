@@ -33,9 +33,9 @@ const EDGES: [string, string, boolean][] = [
 const R = 22;
 
 function stateColor(s: NodeState) {
-  if (s === "active") return { fill: "#7c3aed", stroke: "#a78bfa", glow: true };
-  if (s === "done") return { fill: "#059669", stroke: "#34d399", glow: false };
-  return { fill: "#1e293b", stroke: "#334155", glow: false };
+  if (s === "active") return { fill: "#7c3aed", stroke: "#a78bfa", glow: true, pending: false };
+  if (s === "done") return { fill: "#059669", stroke: "#34d399", glow: false, pending: false };
+  return { fill: "currentColor", stroke: "currentColor", glow: false, pending: true };
 }
 
 function AgentGraphBase({
@@ -51,11 +51,11 @@ function AgentGraphBase({
   const pos = (id: string) => NODES.find((n) => n.id === id)!;
 
   return (
-    <div className="overflow-x-auto">
-      <svg viewBox="0 0 720 280" className="h-[220px] w-full min-w-[640px]">
+    <div className="overflow-x-auto scrollbar-overlay">
+      <svg viewBox="0 0 720 280" className="h-[220px] w-full min-w-[640px] text-slate-300 dark:text-slate-700">
         <defs>
           <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L6,3 L0,6 Z" fill="#475569" />
+            <path d="M0,0 L6,3 L0,6 Z" className="fill-slate-400 dark:fill-slate-500" />
           </marker>
         </defs>
 
@@ -84,7 +84,7 @@ function AgentGraphBase({
               y1={a.y}
               x2={b.x}
               y2={b.y}
-              stroke="#334155"
+              className="stroke-slate-300 dark:stroke-slate-600"
               strokeWidth={1.5}
               markerEnd="url(#arrow)"
             />
@@ -97,11 +97,33 @@ function AgentGraphBase({
           return (
             <g key={n.id} transform={`translate(${n.x},${n.y})`}>
               {c.glow && <circle r={R + 8} fill="#7c3aed" opacity={0.18} className="pulse-dot" />}
-              <circle r={R} fill={c.fill} stroke={c.stroke} strokeWidth={2} />
-              <text textAnchor="middle" y={4} fontSize={9} fontWeight={700} fill="#f8fafc">
-                {n.label.split(" ").map((w) => w[0]).join("").slice(0, 3)}
+              <circle
+                r={R}
+                fill={c.pending ? undefined : c.fill}
+                stroke={c.pending ? undefined : c.stroke}
+                strokeWidth={2}
+                className={c.pending ? "graph-node-pending" : undefined}
+              />
+              <text
+                textAnchor="middle"
+                y={4}
+                fontSize={9}
+                fontWeight={700}
+                className={c.pending ? "fill-slate-600 dark:fill-slate-200" : "fill-white"}
+              >
+                {n.label
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .slice(0, 3)}
               </text>
-              <text textAnchor="middle" y={R + 16} fontSize={10} fontWeight={600} fill={s === "pending" ? "#64748b" : "#cbd5e1"}>
+              <text
+                textAnchor="middle"
+                y={R + 16}
+                fontSize={10}
+                fontWeight={600}
+                className={s === "pending" ? "fill-slate-500" : "fill-slate-700 dark:fill-slate-300"}
+              >
                 {n.label}
               </text>
             </g>

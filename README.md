@@ -1,6 +1,6 @@
 # Synthesis - Autonomous Multi-Agent Research Platform
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-synthesis--gold.vercel.app-black?style=for-the-badge&logo=vercel)](https://synthesis-gold.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-synthesis--agent.vercel.app-black?style=for-the-badge&logo=vercel)](https://synthesis-agent.vercel.app/)
 [![CI](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/synthesis/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -14,7 +14,7 @@
 
 ## Live Demo
 
-**https://synthesis-gold.vercel.app/**
+**https://synthesis-agent.vercel.app/**
 
 - **Real LLM path is live** - Groq (`llama-3.3-70b-versatile`) + Tavily web search. Full multi-agent runs with cited reports, Reflexion, and telemetry.
 - **Demo / simulated mode is the default** - works with or without keys. Real LLM/search only when LIVE_MODE=true and keys are set (optional PUBLIC_RUN_TOKEN).

@@ -24,17 +24,17 @@ const ICON: Record<string, string> = {
 };
 
 const COLOR: Record<string, string> = {
-  node_start: "text-violet-300",
-  node_end: "text-slate-400",
-  plan_ready: "text-amber-300",
-  researcher: "text-cyan-300",
-  tool_call: "text-sky-300",
-  evidence: "text-emerald-300",
-  report_chunk: "text-fuchsia-300",
-  reflection: "text-yellow-300",
-  final: "text-emerald-400",
-  error: "text-red-400",
-  status: "text-slate-500",
+  node_start: "text-violet-600 dark:text-violet-300",
+  node_end: "text-dim",
+  plan_ready: "text-amber-600 dark:text-amber-300",
+  researcher: "text-cyan-600 dark:text-cyan-300",
+  tool_call: "text-sky-600 dark:text-sky-300",
+  evidence: "text-emerald-600 dark:text-emerald-300",
+  report_chunk: "text-fuchsia-600 dark:text-fuchsia-300",
+  reflection: "text-yellow-600 dark:text-yellow-300",
+  final: "text-emerald-600 dark:text-emerald-400",
+  error: "text-red-600 dark:text-red-400",
+  status: "text-dim",
 };
 
 function describe(e: AgentEvent): string {
@@ -71,13 +71,13 @@ function TimelineBase({ entries }: { entries: TimelineEntry[] }) {
   }, [entries.length]);
 
   return (
-    <div className="max-h-[460px] space-y-1 overflow-y-auto pr-1 font-mono text-xs">
-      {entries.length === 0 && <p className="text-slate-600">Awaiting events…</p>}
+    <div className="space-y-1 pr-1 font-mono text-xs">
+      {entries.length === 0 && <p className="text-dim">Awaiting events…</p>}
       {entries.map((t) => (
-        <div key={t.seq} className="flex gap-2 rounded-md px-2 py-1 hover:bg-white/[0.03]">
-          <span className="select-none text-slate-600">{String(t.seq).padStart(3, "0")}</span>
-          <span className={COLOR[t.event.type] ?? "text-slate-400"}>{ICON[t.event.type] ?? "·"}</span>
-          <span className="min-w-0 flex-1 text-slate-300">{describe(t.event)}</span>
+        <div key={t.seq} className="flex gap-2 rounded-md px-2 py-1 hover:bg-[var(--surface-raised)]">
+          <span className="select-none text-dim">{String(t.seq).padStart(3, "0")}</span>
+          <span className={COLOR[t.event.type] ?? "text-soft"}>{ICON[t.event.type] ?? "·"}</span>
+          <span className="min-w-0 flex-1 text-soft">{describe(t.event)}</span>
         </div>
       ))}
       <div ref={endRef} />

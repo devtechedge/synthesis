@@ -8,16 +8,16 @@ import {
 
 function req(init: { origin?: string; referer?: string; host?: string; ip?: string } = {}): Request {
   const headers = new Headers();
-  headers.set("host", init.host ?? "synthesis-gold.vercel.app");
+  headers.set("host", init.host ?? "synthesis-agent.vercel.app");
   if (init.origin) headers.set("origin", init.origin);
   if (init.referer) headers.set("referer", init.referer);
   if (init.ip) headers.set("x-forwarded-for", init.ip);
-  return new Request("https://synthesis-gold.vercel.app/api/run", { method: "POST", headers });
+  return new Request("https://synthesis-agent.vercel.app/api/run", { method: "POST", headers });
 }
 
 describe("assertSameOrigin", () => {
   it("allows matching Origin", () => {
-    expect(assertSameOrigin(req({ origin: "https://synthesis-gold.vercel.app" })).ok).toBe(true);
+    expect(assertSameOrigin(req({ origin: "https://synthesis-agent.vercel.app" })).ok).toBe(true);
   });
 
   it("rejects cross-origin Origin", () => {
@@ -60,7 +60,7 @@ describe("guardExpensivePost", () => {
   beforeEach(() => __resetRateLimitBucketsForTests());
 
   it("combines origin + rate limit", () => {
-    expect(guardExpensivePost(req({ origin: "https://synthesis-gold.vercel.app", ip: "9.9.9.9" })).ok).toBe(
+    expect(guardExpensivePost(req({ origin: "https://synthesis-agent.vercel.app", ip: "9.9.9.9" })).ok).toBe(
       true,
     );
     expect(guardExpensivePost(req({ origin: "https://evil.example", ip: "9.9.9.9" })).ok).toBe(false);
