@@ -14,7 +14,7 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.20",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
+    "next": "16.3.5",
     "pg": "8.20.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
